@@ -1,0 +1,1574 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0D1013">
+<title>Piedra de Toque</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Herramienta de campo: grafito neutro, un solo acento azul (azurita) y cinco colores semánticos para los niveles de interés. */
+:root {
+  --bg: #ECEEEF; --surf: #F8F9F9; --surf2: #E1E5E7; --ink: #14181B; --mut: #58636B; --line: #CBD2D6;
+  --acc: #1D4FB8; --acc-ink: #FFFFFF; --ok: #1E7A46; --warn: #9A5B00;
+  --c0: #5B666E; --c1: #0C7C78; --c2: #A8660B; --c3: #6C45C4; --c4: #B93428;
+  --f-disp: 'Barlow Semi Condensed', 'Roboto Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --f-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1013; --surf: #151A1E; --surf2: #1D2328; --ink: #E6EAED; --mut: #8E9AA3; --line: #283037;
+    --acc: #86A9FF; --acc-ink: #08101F; --ok: #5BD08A; --warn: #E9B24D;
+    --c0: #96A2AB; --c1: #46CBC3; --c2: #E9B24D; --c3: #B9A0FF; --c4: #FF8173; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1013; --surf: #151A1E; --surf2: #1D2328; --ink: #E6EAED; --mut: #8E9AA3; --line: #283037;
+  --acc: #86A9FF; --acc-ink: #08101F; --ok: #5BD08A; --warn: #E9B24D;
+  --c0: #96A2AB; --c1: #46CBC3; --c2: #E9B24D; --c3: #B9A0FF; --c4: #FF8173; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); min-height: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+h1, h2, h3, h4 { font-family: var(--f-disp); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+p { margin: 0 0 .6em; }
+ul, ol { margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar h1 { flex: 1; font-size: 1.35rem; text-transform: uppercase; letter-spacing: .08em; }
+.ib { width: 40px; height: 40px; border: 1px solid var(--line); background: var(--surf); border-radius: 10px; font-size: 1.25rem; line-height: 1; cursor: pointer; }
+.vista { max-width: 640px; margin: 0 auto; padding: 16px 16px 110px; display: flex; flex-direction: column; gap: 14px; }
+.vista > div { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surf); border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tabs button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; border: 0; background: none; color: var(--mut); font: 600 .72rem/1.1 var(--f-disp); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-radius: 10px; }
+.tabs button.on { color: var(--acc); }
+
+.card { background: var(--surf); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 12px; min-width: 0; }
+.card > h3 { font-size: 1.05rem; text-transform: uppercase; letter-spacing: .08em; color: var(--mut); margin-bottom: 10px; }
+.card > * + * { margin-top: 10px; }
+.card > h3 + * { margin-top: 0; }
+.nivel { border-width: 1px 1px 1px 1px; }
+.nivel.c0 { border-color: var(--c0); } .nivel.c1 { border-color: var(--c1); } .nivel.c2 { border-color: var(--c2); } .nivel.c3 { border-color: var(--c3); } .nivel.c4 { border-color: var(--c4); }
+.nd { font-size: 1.05rem; }
+.mut { color: var(--mut); } .peq { font-size: .85rem; } .nota { color: var(--mut); font-size: .9rem; }
+.ayuda { color: var(--mut); font-size: .9rem; }
+.aviso { color: var(--warn); font-size: .92rem; }
+.big { font: 600 1.7rem/1 var(--f-disp); }
+.datos { font-family: var(--f-mono); font-size: .85rem; }
+
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font: 700 .78rem/1.3 var(--f-disp); letter-spacing: .1em; border: 1px solid currentColor; white-space: nowrap; }
+.pill.c0 { color: var(--c0); } .pill.c1 { color: var(--c1); } .pill.c2 { color: var(--c2); } .pill.c3 { color: var(--c3); } .pill.c4 { color: var(--c4); }
+.pill.vac { opacity: .7; }
+.pill.ban.alta { color: var(--ok); } .pill.ban.media { color: var(--warn); } .pill.ban.baja { color: var(--c4); }
+.tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; font: 600 .66rem/1.5 var(--f-disp); letter-spacing: .1em; color: var(--mut); vertical-align: middle; }
+.tag.acc { color: var(--acc); border-color: var(--acc); } .tag.ej { color: var(--c2); border-color: var(--c2); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surf2); font-weight: 600; cursor: pointer; }
+.btn.pri { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
+.btn.peq { min-height: 36px; padding: 0 12px; font-size: .9rem; }
+.btn.ancho { width: 100%; }
+.btn.peligro { color: var(--c4); border-color: var(--c4); background: transparent; }
+.enlace { border: 0; background: none; color: var(--acc); text-decoration: underline; cursor: pointer; padding: 0 0 0 6px; }
+.acciones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips.fila { gap: 6px; }
+.chip { min-height: 40px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surf); cursor: pointer; text-align: left; line-height: 1.25; }
+.chip.on { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
+.chip.ia { border-style: dashed; }
+.chip .tag { color: inherit; border-color: currentColor; font-style: normal; }
+
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surf2); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { min-height: 40px; border: 0; border-radius: 8px; background: none; font: 600 .85rem var(--f-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--mut); cursor: pointer; }
+.seg button.on { background: var(--surf); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .15); }
+.mhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cod { font: 500 .85rem var(--f-mono); color: var(--mut); }
+
+.resumen { display: flex; gap: 24px; align-items: baseline; color: var(--mut); }
+.resumen .big { color: var(--ink); }
+.buscar input, .ctl { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+textarea.ctl { min-height: 96px; resize: vertical; }
+.campo { display: flex; flex-direction: column; gap: 4px; }
+.campo > span { font: 600 .78rem var(--f-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--mut); }
+.dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+
+.lista { display: flex; flex-direction: column; gap: 8px; }
+.item { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; padding: 10px; width: 100%; text-align: left; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; position: relative; }
+.item .thumb { width: 56px; height: 56px; border-radius: 8px; overflow: hidden; background: var(--surf2); display: grid; place-items: center; color: var(--mut); }
+.item img, .miniaturas img { width: 100%; height: 100%; object-fit: cover; }
+.itxt { display: flex; flex-direction: column; min-width: 0; }
+.ititle { font-weight: 600; overflow-wrap: anywhere; }
+.isub { color: var(--mut); font-size: .82rem; }
+.estrella { position: absolute; top: 6px; right: 8px; color: var(--c2); font-size: .9rem; }
+.vacio { text-align: center; padding: 32px 8px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.vacio h2 { font-size: 1.4rem; } .vacio p { color: var(--mut); max-width: 44ch; }
+.pasos { list-style: none; counter-reset: p; display: flex; flex-direction: column; gap: 8px; }
+.pasos li { display: grid; grid-template-columns: 90px 1fr; gap: 8px; }
+.pasos b { font-family: var(--f-disp); text-transform: uppercase; letter-spacing: .06em; color: var(--acc); }
+.pasos span { color: var(--mut); font-size: .92rem; }
+
+.slots { display: flex; flex-direction: column; gap: 10px; }
+.slot { display: grid; grid-template-columns: 96px 1fr; gap: 12px; padding: 10px; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; }
+.slot.hecha { border-color: var(--ok); }
+.slotimg { aspect-ratio: 1; max-width: 100%; border-radius: 8px; overflow: hidden; background: var(--surf2); display: grid; place-items: center; font-size: 1.6rem; color: var(--mut); }
+.slotimg img { width: 100%; height: 100%; object-fit: cover; }
+.slottxt { min-width: 0; } .slottxt p { font-size: .88rem; color: var(--mut); margin: 2px 0 8px; }
+.slottxt .cal.ok { color: var(--ok); } .slottxt .cal.aviso { color: var(--warn); }
+.miniaturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
+.miniaturas img { aspect-ratio: 1; border-radius: 8px; }
+.ph { color: var(--mut); }
+
+.ranking { display: flex; flex-direction: column; gap: 6px; }
+.cand { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.cand.otro { border-style: dashed; }
+.cand summary { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 9px 10px; cursor: pointer; list-style: none; }
+.cand summary::-webkit-details-marker { display: none; }
+.cn { font-weight: 600; overflow-wrap: anywhere; } .cp { font: 500 .95rem var(--f-mono); text-align: right; display: flex; gap: 6px; justify-content: flex-end; align-items: baseline; }
+.barra { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--surf2); overflow: hidden; }
+.barra span { display: block; height: 100%; background: var(--acc); border-radius: 3px; }
+.cand.otro .barra span { background: var(--mut); }
+.delta { font-style: normal; font-size: .75rem; }
+.delta.sube { color: var(--ok); } .delta.baja { color: var(--c4); }
+.det { padding: 0 10px 10px; font-size: .92rem; }
+
+.evids { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.evid { border-top: 3px solid var(--line); padding-top: 6px; min-width: 0; }
+.evid h4 { font-size: .8rem; letter-spacing: .12em; margin-bottom: 4px; }
+.evid.obs { border-color: var(--ok); } .evid.inf { border-color: var(--acc); } .evid.nd { border-color: var(--mut); }
+.evid ul { list-style: none; display: flex; flex-direction: column; gap: 3px; font-size: .9rem; } .evid li { overflow-wrap: anywhere; }
+
+.prueba { display: flex; flex-direction: column; gap: 8px; }
+.prueba header { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.prueba h4 { font-size: 1.15rem; }
+.porque { font-size: .9rem; }
+.opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.opciones.col { grid-template-columns: 1fr; }
+.op { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); text-align: left; cursor: pointer; min-height: 48px; }
+.op:hover { border-color: var(--acc); }
+.opprev { font: 500 .78rem var(--f-mono); color: var(--mut); }
+.plegable { border-top: 1px solid var(--line); padding: 8px 0; }
+.plegable summary { cursor: pointer; font-weight: 600; }
+.plegable > * + * { margin-top: 8px; }
+.calc { display: flex; flex-direction: column; gap: 10px; }
+.resultado { margin-top: 8px; }
+.seg-it { padding-left: 10px; border-left: 3px solid var(--warn); }
+.ejes { display: flex; flex-direction: column; gap: 12px; }
+.ejes h4, .razones + h4 { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); margin-bottom: 2px; }
+.razones, .reg { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.reg li { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.lista-min { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 9; max-width: 600px; margin: 0 auto; padding: 12px 14px; background: var(--ink); color: var(--bg); border-radius: 10px; font-size: .92rem; }
+@media (prefers-reduced-motion: no-preference) { .barra span { transition: width .35s ease; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/*ENGINE_START*/
+const VOC = {
+  brillo: {
+    metalico: 'Metálico (como metal pulido)', submetalico: 'Submetálico (metal opaco o apagado)',
+    vitreo: 'Vítreo (como vidrio)', resinoso: 'Resinoso (como resina o ámbar)',
+    adamantino: 'Adamantino (destello de diamante)', nacarado: 'Nacarado (como perla)',
+    sedoso: 'Sedoso (fibras brillantes)', graso: 'Graso (como aceite)', terroso: 'Mate / terroso'
+  },
+  color: {
+    incoloro: 'Incoloro', blanco: 'Blanco', gris: 'Gris', negro: 'Negro', marron: 'Marrón', rojo: 'Rojo',
+    naranja: 'Naranja', amarillo: 'Amarillo', verde: 'Verde', azul: 'Azul', violeta: 'Violeta',
+    rosa: 'Rosa', dorado: 'Dorado / latón', plateado: 'Plateado'
+  },
+  transp: { transparente: 'Transparente', translucido: 'Translúcido', opaco: 'Opaco' },
+  habito: {
+    prismatico: 'Prismático (alargado, con caras)', laminar: 'Laminar / en hojas', cubico: 'Cúbico',
+    equidimensional: 'Equidimensional (granos, rombos, octaedros)', masivo: 'Masivo / granular',
+    botroidal: 'Botroidal (racimos redondeados)', fibroso: 'Fibroso / acicular',
+    terroso: 'Terroso / pulverulento', dendritico: 'Dendrítico (ramas finas)'
+  },
+  mag: { ninguno: 'Ninguna', debil: 'Débil', fuerte: 'Fuerte' },
+  raya: {
+    blanca: 'Blanca / sin color', gris: 'Gris', negra: 'Negra', marron: 'Marrón', roja: 'Roja / rojiza',
+    amarilla: 'Amarilla / dorada', verde: 'Verde', azul: 'Azul'
+  },
+  fizz: { ninguno: 'Sin burbujas', debil: 'Burbujas leves', fuerte: 'Burbujas claras' },
+  mal: { quebradizo: 'Quebradiza (salta en trocitos)', maleable: 'Maleable (se deforma como metal blando)' },
+  rasgo: {
+    costra: 'Costra negra delgada y mate (posible costra de fusión)',
+    regmaglipto: 'Hendiduras como huellas de pulgar (regmaglíptos)',
+    vesiculas: 'Burbujas o huecos redondeados (vesículas)',
+    metal_fresco: 'Puntos o láminas metálicas en una cara fresca',
+    condrulos: 'Esferas diminutas incrustadas (posibles cóndrulos)',
+    bandeado: 'Bandas o capas visibles',
+    estrias: 'Estrías paralelas en las caras del cristal',
+    caras_planas: 'Caras cristalinas planas y bien formadas',
+    exfoliacion: 'Se separa en láminas o planos lisos',
+    conchoidal: 'Fractura curva, como concha',
+    oxidacion: 'Costra rojiza, anaranjada u ocre de óxidos',
+    sulfuros_visibles: 'Granos o cubos metálicos incrustados',
+    irisado: 'Reflejos de arcoíris en la superficie',
+    tubular: 'Forma de tubo o rama hueca',
+    maclas: 'Cristales cruzados o acoplados (maclas)',
+    granos_gruesos: 'Granos de varios minerales visibles a simple vista',
+    grano_fino: 'Grano tan fino que no se ven cristales',
+    fosiles: 'Fósiles o impresiones de organismos'
+  }
+};
+
+const KIND_NAMES = {
+  brillo: 'Brillo', color: 'Color', transp: 'Transparencia', habito: 'Hábito', rasgo: 'Rasgo',
+  mag: 'Magnetismo', raya: 'Raya', fizz: 'Reacción al vinagre', mal: 'Maleabilidad',
+  dureza: 'Dureza', densidad: 'Densidad'
+};
+
+const KIND_FISICO = ['mag', 'raya', 'fizz', 'mal', 'dureza', 'densidad'];
+const KIND_VISUAL = ['brillo', 'color', 'transp', 'habito'];
+
+const DUREZA_OPCIONES = [
+  { id: 'd1', rango: [1, 2.5], texto: 'La uña la raya' },
+  { id: 'd2', rango: [2.5, 3.5], texto: 'La uña no, pero una moneda de cobre sí' },
+  { id: 'd3', rango: [3.5, 5.5], texto: 'La moneda no, pero un cuchillo o clavo de acero sí' },
+  { id: 'd4', rango: [5.5, 6], texto: 'El acero no la raya y ella no raya el vidrio' },
+  { id: 'd56', rango: [6, 10], texto: 'Ella raya el vidrio y el acero no la raya (sin cuarzo para comparar)' },
+  { id: 'd5', rango: [6, 7], texto: 'Raya el vidrio, pero un cuarzo la raya a ella' },
+  { id: 'd6', rango: [7, 10], texto: 'Ella raya el cuarzo' }
+];
+
+const DENSIDAD_BINS = [[1.5, 2.3], [2.3, 2.7], [2.7, 3.1], [3.1, 3.6], [3.6, 4.5], [4.5, 5.5], [5.5, 7.5], [7.5, 20]];
+
+const MERCADO = {
+  gema: { nombre: 'gema (piedra para talla)', factores: ['peso', 'transparencia', 'color', 'inclusiones', 'fracturas', 'potencial de talla', 'calidad del cristal'] },
+  esp: { nombre: 'espécimen mineral de colección', factores: ['hábito cristalino', 'terminaciones intactas', 'tamaño', 'daños', 'matriz', 'asociación mineral', 'localidad', 'estética', 'rareza', 'procedencia documentada'] },
+  mena: { nombre: 'mena (el valor depende de la ley y del yacimiento)', factores: ['contenido metálico real (requiere ensayo)', 'tamaño y continuidad del depósito', 'accesibilidad y permisos'] }
+};
+
+const PELIGROS = {
+  arsenico: 'Puede contener arsénico: no la lijes, cortes ni calientes, evita respirar su polvo y lávate las manos después de tocarla.',
+  mercurio: 'Posible mercurio: no la calientes ni la muelas, guárdala en un recipiente cerrado y lávate las manos.',
+  plomo: 'Puede contener plomo: evita su polvo, lávate las manos y mantenla lejos de niños y mascotas.',
+  uranio: 'Posible mineral de uranio (radiactividad débil): no la guardes en dormitorios, evita su polvo y pide una medición con contador Geiger.',
+  asbesto: 'Posibles fibras de asbesto: no la rasques, cortes ni soples su polvo; si hay que manipularla, mantenla húmeda y consulta a un profesional.',
+  cobre: 'Contiene cobre: no cortes ni pulas en seco y no la uses con alimentos.',
+  antimonio: 'Contiene antimonio: evita su polvo y lávate las manos después de manipularla.',
+  desconocida: 'Aún no está identificada: lávate las manos después de manipularla y no inhales polvo si la rompes o lijas.'
+};
+
+/* Valores de referencia compilados por Claude a partir de conocimiento mineralógico general.
+   Falta contrastarlos con RRUFF, USGS o Mindat antes de darlos por definitivos. */
+const MINERALES = [
+  // Cuarzo y sílice
+  { id: 'cuarzo', n: 'Cuarzo', f: 'SiO₂', h: [7, 7], d: [2.64, 2.66], br: 'vitreo graso~', co: 'incoloro blanco gris~ negro~ marron~ amarillo~ rosa~', ra: 'blanca', tr: 'transparente translucido opaco~', ha: 'prismatico masivo', rg: 'caras_planas estrias conchoidal', p: 120, nt: 'Raya el vidrio, fractura curva y sin exfoliación.' },
+  { id: 'amatista', n: 'Amatista', f: 'SiO₂', h: [7, 7], d: [2.64, 2.66], br: 'vitreo', co: 'violeta', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico', rg: 'caras_planas estrias', p: 6, col: 1, eco: 'gema', nt: 'Cuarzo violeta; el color se concentra en las puntas.' },
+  { id: 'citrino', n: 'Cuarzo citrino o ahumado', f: 'SiO₂', h: [7, 7], d: [2.64, 2.66], br: 'vitreo', co: 'amarillo naranja~ marron negro~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico', rg: 'caras_planas estrias', p: 8, col: 1, eco: 'gema', nt: 'Cuarzo amarillo a pardo oscuro.' },
+  { id: 'cuarzo_rosa', n: 'Cuarzo rosa', f: 'SiO₂', h: [7, 7], d: [2.64, 2.66], br: 'vitreo graso~', co: 'rosa', ra: 'blanca', tr: 'translucido', ha: 'masivo', rg: 'conchoidal', p: 5, col: 1, eco: 'esp', nt: 'Rosa lechoso, casi nunca en cristales.' },
+  { id: 'calcedonia', n: 'Calcedonia, ágata, jaspe o sílex', f: 'SiO₂', h: [6.5, 7], d: [2.57, 2.66], br: 'vitreo graso~ terroso~', co: 'blanco gris marron rojo naranja~ azul~ verde~ amarillo~ negro~', ra: 'blanca', tr: 'translucido opaco', ha: 'botroidal masivo', rg: 'bandeado conchoidal grano_fino', p: 30, nt: 'Sílice de grano microscópico; fractura curva y brillo céreo.' },
+  { id: 'opalo', n: 'Ópalo', f: 'SiO₂·nH₂O', h: [5.5, 6.5], d: [1.9, 2.3], br: 'vitreo resinoso nacarado~', co: 'incoloro blanco amarillo~ naranja~ rojo~ azul~ negro~ verde~ gris~', ra: 'blanca', tr: 'translucido transparente~ opaco~', ha: 'masivo botroidal', rg: 'irisado conchoidal', p: 3, col: 1, eco: 'gema', nt: 'Amorfo y ligero; el ópalo precioso muestra destellos de colores. Puede agrietarse al secarse.' },
+  // Feldespatos, micas y otros silicatos
+  { id: 'feldespato_k', n: 'Feldespato potásico (ortoclasa, microclina)', f: 'KAlSi₃O₈', h: [6, 6.5], d: [2.55, 2.63], br: 'vitreo nacarado~', co: 'blanco rosa marron~ amarillo~ gris~ verde~', ra: 'blanca', tr: 'translucido opaco transparente~', ha: 'prismatico masivo', rg: 'exfoliacion caras_planas maclas', p: 55, nt: 'Dos planos de exfoliación casi en ángulo recto.' },
+  { id: 'plagioclasa', n: 'Plagioclasa', f: '(Na,Ca)Al(Si,Al)Si₂O₈', h: [6, 6.5], d: [2.6, 2.76], br: 'vitreo nacarado~', co: 'blanco gris incoloro~ verde~ azul~', ra: 'blanca', tr: 'translucido opaco transparente~', ha: 'prismatico masivo', rg: 'exfoliacion estrias maclas', p: 55, nt: 'Estrías finas y paralelas en un plano de exfoliación.' },
+  { id: 'moscovita', n: 'Moscovita (mica blanca)', f: 'KAl₂(AlSi₃O₁₀)(OH)₂', h: [2, 2.5], d: [2.76, 3], br: 'nacarado vitreo~ sedoso~', co: 'incoloro blanco gris~ marron~ verde~ amarillo~', ra: 'blanca', tr: 'transparente translucido', ha: 'laminar', rg: 'exfoliacion', p: 30, nt: 'Se separa en hojas finas, flexibles y elásticas.' },
+  { id: 'biotita', n: 'Biotita (mica oscura)', f: 'K(Mg,Fe)₃(AlSi₃O₁₀)(OH)₂', h: [2.5, 3], d: [2.7, 3.4], br: 'vitreo nacarado', co: 'negro marron verde~', ra: 'gris marron~', tr: 'translucido opaco', ha: 'laminar', rg: 'exfoliacion', p: 30, nt: 'Hojas oscuras, flexibles y elásticas.' },
+  { id: 'clorita', n: 'Clorita', f: '(Mg,Fe)₅Al(AlSi₃O₁₀)(OH)₈', h: [2, 2.5], d: [2.6, 3.3], br: 'vitreo nacarado', co: 'verde', ra: 'verde~ blanca', tr: 'translucido opaco', ha: 'laminar masivo terroso~', rg: 'exfoliacion', p: 18, nt: 'Hojas verdes flexibles pero no elásticas.' },
+  { id: 'talco', n: 'Talco', f: 'Mg₃Si₄O₁₀(OH)₂', h: [1, 1], d: [2.7, 2.8], br: 'nacarado graso', co: 'blanco verde~ gris~ incoloro~', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo laminar', rg: 'exfoliacion', p: 8, nt: 'Jabonoso al tacto y se raya con la uña.' },
+  { id: 'serpentina', n: 'Serpentina', f: 'Mg₃Si₂O₅(OH)₄', h: [2.5, 4], d: [2.5, 2.6], br: 'graso resinoso', co: 'verde amarillo~ negro~', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo', rg: 'conchoidal', p: 12, pel: 'asbesto', nt: 'Verde veteado y tacto jabonoso. Puede acompañarse de asbesto.' },
+  { id: 'crisotilo', n: 'Crisotilo (asbesto)', f: 'Mg₃Si₂O₅(OH)₄', h: [2.5, 3], d: [2.5, 2.6], br: 'sedoso', co: 'blanco verde~ amarillo~ gris~', ra: 'blanca', tr: 'translucido', ha: 'fibroso', rg: '', p: 3, pel: 'asbesto', nt: 'Fibras flexibles y sedosas que se separan en hebras.' },
+  { id: 'actinolita', n: 'Actinolita o tremolita', f: 'Ca₂(Mg,Fe)₅Si₈O₂₂(OH)₂', h: [5, 6], d: [2.9, 3.4], br: 'vitreo sedoso~', co: 'verde blanco gris~', ra: 'blanca', tr: 'translucido', ha: 'fibroso prismatico', rg: 'exfoliacion', p: 3, pel: 'asbesto', nt: 'Agujas o fibras verdosas; la variedad fibrosa es asbesto.' },
+  { id: 'hornblenda', n: 'Hornblenda', f: 'Ca₂(Mg,Fe,Al)₅(Al,Si)₈O₂₂(OH)₂', h: [5, 6], d: [3, 3.5], br: 'vitreo', co: 'negro verde', ra: 'blanca gris~', tr: 'translucido opaco', ha: 'prismatico masivo', rg: 'exfoliacion caras_planas', p: 20, nt: 'Prismas oscuros alargados con exfoliación a 56° y 124°.' },
+  { id: 'augita', n: 'Piroxeno (augita)', f: '(Ca,Mg,Fe)₂Si₂O₆', h: [5.5, 6.5], d: [3.2, 3.6], br: 'vitreo', co: 'negro verde marron', ra: 'blanca gris~', tr: 'translucido opaco', ha: 'prismatico equidimensional masivo', rg: 'exfoliacion caras_planas', p: 15, nt: 'Prismas cortos oscuros con exfoliación casi a 90°.' },
+  { id: 'olivino', n: 'Olivino (peridoto)', f: '(Mg,Fe)₂SiO₄', h: [6.5, 7], d: [3.2, 3.9], br: 'vitreo', co: 'verde amarillo~ marron~', ra: 'blanca', tr: 'transparente translucido', ha: 'masivo equidimensional', rg: 'conchoidal', p: 8, col: 1, eco: 'gema', nt: 'Granos verde oliva en basaltos; el peridoto transparente es gema.' },
+  { id: 'granate', n: 'Granate', f: 'X₃Y₂(SiO₄)₃', h: [6.5, 7.5], d: [3.5, 4.3], br: 'vitreo resinoso~', co: 'rojo marron naranja~ verde~ negro~ rosa~ amarillo~', ra: 'blanca', tr: 'transparente translucido opaco~', ha: 'equidimensional masivo', mg: 'ninguno debil~', rg: 'caras_planas conchoidal', p: 20, col: 1, eco: 'gema', nt: 'Cristales de 12 o 24 caras; sin exfoliación.' },
+  { id: 'turmalina', n: 'Turmalina', f: 'Na(Mg,Fe,Li,Al)₃Al₆(BO₃)₃Si₆O₁₈(OH)₄', h: [7, 7.5], d: [3, 3.3], br: 'vitreo resinoso~', co: 'negro verde rosa~ azul~ marron~ incoloro~ rojo~', ra: 'blanca', tr: 'translucido opaco transparente', ha: 'prismatico', rg: 'estrias caras_planas conchoidal', p: 22, col: 1, eco: 'gema', ind: 1, nt: 'Prismas de sección triangular redondeada con estrías a lo largo. La negra (chorlo) es la más común.' },
+  { id: 'berilo', n: 'Berilo (aguamarina, heliodoro, morganita)', f: 'Be₃Al₂Si₆O₁₈', h: [7.5, 8], d: [2.63, 2.92], br: 'vitreo', co: 'incoloro azul verde amarillo rosa blanco~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico', rg: 'caras_planas', p: 4, col: 1, eco: 'gema', ind: 2, na: 1, nt: 'Prismas hexagonales sin estrías profundas; muy duro para ser tan ligero.' },
+  { id: 'esmeralda', n: 'Esmeralda', f: 'Be₃Al₂Si₆O₁₈', h: [7.5, 8], d: [2.67, 2.78], br: 'vitreo', co: 'verde', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico', rg: 'caras_planas', p: 1, col: 1, eco: 'gema', ind: 2, na: 1, nt: 'Berilo verde; casi siempre con fracturas e inclusiones.' },
+  { id: 'corindon', n: 'Corindón (rubí, zafiro)', f: 'Al₂O₃', h: [9, 9], d: [3.95, 4.1], br: 'adamantino vitreo', co: 'azul rojo rosa~ gris marron amarillo~ violeta~ incoloro~ verde~', ra: 'blanca', tr: 'transparente translucido opaco', ha: 'prismatico equidimensional masivo', rg: 'caras_planas', p: 2, col: 1, eco: 'gema', na: 1, nt: 'Dureza 9 y densidad cercana a 4. Solo el diamante lo raya.' },
+  { id: 'topacio', n: 'Topacio', f: 'Al₂SiO₄(F,OH)₂', h: [8, 8], d: [3.49, 3.57], br: 'vitreo', co: 'incoloro amarillo azul~ rosa~ marron~ naranja~ verde~', ra: 'blanca', tr: 'transparente', ha: 'prismatico', rg: 'exfoliacion caras_planas', p: 2, col: 1, eco: 'gema', ind: 2, na: 1, nt: 'Prismas con exfoliación perfecta en la base; más denso que el cuarzo.' },
+  { id: 'zircon', n: 'Circón', f: 'ZrSiO₄', h: [7, 7.5], d: [4.6, 4.7], br: 'adamantino vitreo', co: 'marron incoloro~ rojo~ amarillo~ verde~ naranja~ gris~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico equidimensional', rg: 'caras_planas', p: 3, col: 1, eco: 'gema', nt: 'Muy denso para un mineral claro (≈4,7).' },
+  { id: 'epidota', n: 'Epidota', f: 'Ca₂Al₂(Fe,Al)(SiO₄)₃(OH)', h: [6, 7], d: [3.3, 3.5], br: 'vitreo', co: 'verde amarillo~ marron~ negro~', ra: 'blanca gris~', tr: 'transparente translucido', ha: 'prismatico masivo', rg: 'estrias exfoliacion', p: 8, nt: 'Verde pistacho característico, a menudo en cristales estriados.' },
+  { id: 'andalucita', n: 'Andalucita', f: 'Al₂SiO₅', h: [6.5, 7.5], d: [3.13, 3.16], br: 'vitreo', co: 'marron rosa~ verde~ gris~ rojo~ blanco~', ra: 'blanca', tr: 'translucido transparente~ opaco~', ha: 'prismatico', rg: 'caras_planas', p: 4, col: 1, eco: 'esp', nt: 'Prismas casi cuadrados; la quiastolita muestra una cruz oscura en sección.' },
+  { id: 'cianita', n: 'Cianita', f: 'Al₂SiO₅', h: [4, 7], d: [3.53, 3.65], br: 'vitreo nacarado', co: 'azul blanco~ gris~ verde~', ra: 'blanca', tr: 'translucido transparente~', ha: 'laminar prismatico', rg: 'exfoliacion', p: 8, col: 1, eco: 'esp', nt: 'Hojas azules alargadas. Su dureza cambia con la dirección: ~4,5 a lo largo y ~6–7 a través.' },
+  { id: 'estaurolita', n: 'Estaurolita', f: 'Fe₂Al₉Si₄O₂₃(OH)', h: [7, 7.5], d: [3.74, 3.83], br: 'vitreo resinoso~', co: 'marron negro~', ra: 'blanca gris~', tr: 'translucido opaco', ha: 'prismatico', rg: 'maclas caras_planas', p: 4, col: 1, eco: 'esp', nt: 'Prismas pardos que a veces forman cruces casi perfectas.' },
+  { id: 'espodumena', n: 'Espodumena (kunzita, hiddenita)', f: 'LiAlSi₂O₆', h: [6.5, 7], d: [3.03, 3.23], br: 'vitreo nacarado~', co: 'blanco incoloro~ rosa~ verde~ amarillo~ gris~', ra: 'blanca', tr: 'translucido transparente~ opaco~', ha: 'prismatico', rg: 'estrias exfoliacion caras_planas', p: 1.5, col: 1, eco: 'mena gema', ind: 2, nt: 'Mena de litio en pegmatitas; las variedades transparentes son gemas.' },
+  { id: 'lepidolita', n: 'Lepidolita', f: 'K(Li,Al)₃(Si,Al)₄O₁₀(F,OH)₂', h: [2.5, 3.5], d: [2.8, 2.9], br: 'nacarado vitreo~', co: 'rosa violeta blanco~ gris~', ra: 'blanca', tr: 'translucido', ha: 'laminar masivo', rg: 'exfoliacion', p: 2, col: 1, eco: 'mena esp', ind: 2, nt: 'Mica lila o rosada; mena de litio en pegmatitas.' },
+  // Haluros, sulfatos, fosfatos
+  { id: 'apatito', n: 'Apatito', f: 'Ca₅(PO₄)₃(F,Cl,OH)', h: [5, 5], d: [3.1, 3.4], br: 'vitreo resinoso~', co: 'verde azul~ amarillo~ marron~ incoloro~ violeta~ rosa~ blanco~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico masivo', rg: 'caras_planas conchoidal', p: 10, ind: 1, nt: 'Hexagonal; se raya con un cuchillo, pero no con una moneda.' },
+  { id: 'fluorita', n: 'Fluorita', f: 'CaF₂', h: [4, 4], d: [3, 3.3], br: 'vitreo', co: 'violeta verde incoloro azul amarillo rosa~ marron~ blanco~ naranja~', ra: 'blanca', tr: 'transparente translucido', ha: 'cubico equidimensional masivo', rg: 'caras_planas exfoliacion', p: 12, col: 1, eco: 'esp', ind: 2, nt: 'Cubos u octaedros; exfoliación octaédrica; se raya con un cuchillo. Muchas fluorescen con UV.' },
+  { id: 'baritina', n: 'Baritina', f: 'BaSO₄', h: [3, 3.5], d: [4.3, 4.6], br: 'vitreo nacarado~', co: 'blanco incoloro~ amarillo~ azul~ gris~ marron~ rojo~', ra: 'blanca', tr: 'transparente translucido opaco~', ha: 'laminar prismatico masivo', rg: 'exfoliacion caras_planas', p: 6, col: 1, eco: 'esp mena', ind: 2, nt: 'Pesa mucho para ser un mineral claro (≈4,5).' },
+  { id: 'celestina', n: 'Celestina', f: 'SrSO₄', h: [3, 3.5], d: [3.95, 3.97], br: 'vitreo', co: 'azul incoloro~ blanco~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico laminar', rg: 'exfoliacion caras_planas', p: 1, col: 1, eco: 'esp', ind: 2, nt: 'Azul pálido y denso; similar a la baritina pero más ligera.' },
+  { id: 'yeso', n: 'Yeso (selenita, alabastro)', f: 'CaSO₄·2H₂O', h: [2, 2], d: [2.3, 2.33], br: 'vitreo nacarado sedoso~', co: 'incoloro blanco gris~ amarillo~ marron~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico masivo fibroso~', rg: 'exfoliacion', p: 25, nt: 'Se raya con la uña.' },
+  { id: 'halita', n: 'Halita (sal de roca)', f: 'NaCl', h: [2.5, 2.5], d: [2.1, 2.2], br: 'vitreo', co: 'incoloro blanco gris~ rosa~ azul~', ra: 'blanca', tr: 'transparente translucido', ha: 'cubico masivo', rg: 'caras_planas exfoliacion', p: 5, nt: 'Cubos que se disuelven en agua.' },
+  // Carbonatos
+  { id: 'calcita', n: 'Calcita', f: 'CaCO₃', h: [3, 3], d: [2.71, 2.71], fz: 'fuerte', br: 'vitreo nacarado~', co: 'blanco incoloro amarillo~ gris~ marron~ rosa~ verde~ azul~ naranja~', ra: 'blanca', tr: 'transparente translucido opaco~', ha: 'prismatico masivo equidimensional', rg: 'exfoliacion caras_planas', p: 60, nt: 'Se rompe en romboedros y burbujea con ácido o vinagre (mejor en polvo). Se raya con una moneda.' },
+  { id: 'dolomita', n: 'Dolomita', f: 'CaMg(CO₃)₂', h: [3.5, 4], d: [2.84, 2.86], fz: 'debil ninguno~', br: 'vitreo nacarado~', co: 'blanco gris~ rosa~ marron~ incoloro~', ra: 'blanca', tr: 'translucido transparente~', ha: 'masivo equidimensional', rg: 'exfoliacion', p: 25, nt: 'Parecida a la calcita, pero solo burbujea débilmente y en polvo.' },
+  { id: 'aragonito', n: 'Aragonito', f: 'CaCO₃', h: [3.5, 4], d: [2.93, 2.95], fz: 'fuerte', br: 'vitreo', co: 'blanco incoloro amarillo~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico fibroso masivo', rg: 'maclas', p: 5, nt: 'Más denso y duro que la calcita; sin exfoliación romboédrica.' },
+  { id: 'siderita', n: 'Siderita', f: 'FeCO₃', h: [3.5, 4.5], d: [3.7, 3.9], fz: 'debil', mg: 'ninguno debil~', br: 'vitreo nacarado~', co: 'marron amarillo~ gris~ rojo~', ra: 'blanca', tr: 'translucido', ha: 'masivo equidimensional', rg: 'exfoliacion oxidacion', p: 4, ind: 1, eco: 'mena', nt: 'Romboedros pardos; se oxida a limonita.' },
+  { id: 'rodocrosita', n: 'Rodocrosita', f: 'MnCO₃', h: [3.5, 4], d: [3.5, 3.7], fz: 'debil', br: 'vitreo nacarado~', co: 'rosa rojo~ marron~ naranja~', ra: 'blanca', tr: 'translucido transparente~', ha: 'botroidal masivo equidimensional', rg: 'bandeado exfoliacion', p: 1.5, col: 1, eco: 'esp gema', ind: 1, nt: 'Rosa a rojo, a veces con bandas.' },
+  { id: 'malaquita', n: 'Malaquita', f: 'Cu₂CO₃(OH)₂', h: [3.5, 4], d: [3.6, 4.05], fz: 'debil', br: 'sedoso vitreo~ terroso~', co: 'verde', ra: 'verde', tr: 'translucido opaco', ha: 'botroidal fibroso masivo', rg: 'bandeado', p: 6, col: 1, eco: 'mena esp', ind: 2, pel: 'cobre', nt: 'Verde intenso con bandas concéntricas; indica cobre cerca.' },
+  { id: 'azurita', n: 'Azurita', f: 'Cu₃(CO₃)₂(OH)₂', h: [3.5, 4], d: [3.77, 3.89], fz: 'debil', br: 'vitreo', co: 'azul', ra: 'azul', tr: 'translucido transparente~ opaco~', ha: 'prismatico botroidal masivo', rg: '', p: 2.5, col: 1, eco: 'mena esp', ind: 2, pel: 'cobre', nt: 'Azul profundo; suele acompañar a la malaquita.' },
+  { id: 'crisocola', n: 'Crisocola', f: '(Cu,Al)₂H₂Si₂O₅(OH)₄·nH₂O', h: [2, 4], d: [2, 2.4], br: 'vitreo graso terroso~', co: 'azul verde', ra: 'blanca verde~ azul~', tr: 'translucido opaco', ha: 'botroidal masivo terroso', rg: '', p: 2, ind: 2, eco: 'mena', pel: 'cobre', nt: 'Azul verdoso, ligera y a veces porosa; mineral secundario de cobre.' },
+  // Gemas ornamentales
+  { id: 'turquesa', n: 'Turquesa', f: 'CuAl₆(PO₄)₄(OH)₈·4H₂O', h: [5, 6], d: [2.6, 2.9], br: 'graso resinoso~ terroso~', co: 'azul verde', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo botroidal', rg: '', p: 1.5, col: 1, eco: 'gema', ind: 1, nt: 'Azul cielo a verde manzana, cerosa y sin cristales visibles.' },
+  { id: 'lapislazuli', n: 'Lapislázuli', f: '(Na,Ca)₈(AlSiO₄)₆(S,SO₄,Cl)₁₋₂', h: [5, 5.5], d: [2.4, 2.95], br: 'vitreo terroso~', co: 'azul', ra: 'azul', tr: 'translucido opaco', ha: 'masivo', rg: 'sulfuros_visibles', p: 1, col: 1, eco: 'gema', nt: 'Azul intenso con motas de pirita dorada.' },
+  { id: 'jade', n: 'Jade (jadeíta, nefrita)', f: 'NaAlSi₂O₆ / Ca₂(Mg,Fe)₅Si₈O₂₂(OH)₂', h: [6, 7], d: [2.9, 3.4], br: 'vitreo graso', co: 'verde blanco gris~ marron~ negro~ amarillo~ rosa~ violeta~', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo fibroso~', rg: '', p: 1.5, col: 1, eco: 'gema orn', nt: 'Muy tenaz (difícil de romper); tacto frío y denso.' },
+  // Óxidos
+  { id: 'hematita', n: 'Hematita', f: 'Fe₂O₃', h: [5, 6.5], d: [4.9, 5.3], br: 'metalico submetalico terroso~', co: 'negro gris rojo marron~', ra: 'roja', tr: 'opaco', ha: 'masivo botroidal laminar terroso equidimensional', mg: 'ninguno debil~', rg: 'bandeado oxidacion', p: 25, ind: 1, eco: 'mena', nt: 'La raya roja la delata aunque la muestra sea negra y metálica.' },
+  { id: 'magnetita', n: 'Magnetita', f: 'Fe₃O₄', h: [5.5, 6.5], d: [5.15, 5.2], br: 'metalico submetalico', co: 'negro', ra: 'negra', tr: 'opaco', ha: 'masivo equidimensional', mg: 'fuerte', rg: 'caras_planas', p: 12, ind: 1, eco: 'mena', nt: 'Un imán la atrae con fuerza; raya negra.' },
+  { id: 'ilmenita', n: 'Ilmenita', f: 'FeTiO₃', h: [5, 6], d: [4.7, 4.79], br: 'submetalico metalico~', co: 'negro', ra: 'negra marron~', tr: 'opaco', ha: 'masivo laminar~', mg: 'debil ninguno~', rg: '', p: 4, ind: 1, eco: 'mena', nt: 'Parecida a la magnetita, pero con atracción débil o nula.' },
+  { id: 'goetita', n: 'Goethita o limonita', f: 'FeO(OH)', h: [5, 5.5], d: [3.3, 4.3], br: 'terroso submetalico~ sedoso~ adamantino~', co: 'marron amarillo naranja~ negro~ rojo~', ra: 'amarilla marron~', tr: 'opaco', ha: 'terroso botroidal masivo fibroso~', rg: 'oxidacion bandeado', p: 35, ind: 1, nt: 'Óxido pardo-amarillento muy común; en cuarzo esponjoso puede marcar la oxidación de sulfuros (gossan).' },
+  { id: 'cromita', n: 'Cromita', f: 'FeCr₂O₄', h: [5.5, 5.5], d: [4.5, 4.8], br: 'submetalico metalico~', co: 'negro', ra: 'marron', tr: 'opaco', ha: 'masivo', mg: 'debil ninguno~', rg: '', p: 1.5, ind: 2, eco: 'mena', nt: 'Granos negros en rocas ultramáficas; raya marrón.' },
+  { id: 'rutilo', n: 'Rutilo', f: 'TiO₂', h: [6, 6.5], d: [4.2, 4.3], br: 'adamantino submetalico', co: 'rojo marron negro~ amarillo~', ra: 'marron amarilla~', tr: 'translucido opaco', ha: 'prismatico', rg: 'estrias maclas', p: 1.5, col: 1, eco: 'esp', ind: 1, nt: 'Agujas rojizas, a veces dentro del cuarzo.' },
+  { id: 'casiterita', n: 'Casiterita', f: 'SnO₂', h: [6, 7], d: [6.8, 7.1], br: 'adamantino submetalico~', co: 'marron negro amarillo~ rojo~', ra: 'blanca marron~', tr: 'translucido opaco', ha: 'masivo prismatico equidimensional', rg: 'caras_planas', p: 1.5, col: 1, eco: 'mena esp', ind: 2, nt: 'Pesadísima para su aspecto (≈7); mena de estaño.' },
+  { id: 'pirolusita', n: 'Pirolusita (óxidos de manganeso)', f: 'MnO₂', h: [2, 6.5], d: [4.4, 5.1], br: 'metalico submetalico terroso~', co: 'negro gris~', ra: 'negra', tr: 'opaco', ha: 'dendritico masivo terroso', rg: '', p: 10, ind: 1, eco: 'mena', nt: 'Dendritas negras en fracturas; mancha los dedos.' },
+  { id: 'uraninita', n: 'Uraninita', f: 'UO₂', h: [5, 6], d: [6.5, 10], br: 'submetalico graso~ terroso~', co: 'negro', ra: 'negra', tr: 'opaco', ha: 'masivo botroidal cubico~', rg: '', p: 0.2, ind: 2, eco: 'mena', na: 1, pel: 'uranio', nt: 'Negra y muy pesada; radiactiva. No manipular sin precauciones.' },
+  // Sulfuros
+  { id: 'pirita', n: 'Pirita', f: 'FeS₂', h: [6, 6.5], d: [4.95, 5.1], br: 'metalico', co: 'dorado', ra: 'negra', tr: 'opaco', ha: 'cubico masivo equidimensional', mg: 'ninguno debil~', rg: 'estrias caras_planas sulfuros_visibles', p: 40, col: 1, ind: 1, nt: 'El «oro de los tontos»: es quebradiza, dura (raya el vidrio) y deja raya negra verdosa.' },
+  { id: 'marcasita', n: 'Marcasita', f: 'FeS₂', h: [6, 6.5], d: [4.85, 4.92], br: 'metalico', co: 'dorado gris~', ra: 'negra', tr: 'opaco', ha: 'masivo laminar', rg: 'sulfuros_visibles', p: 4, col: 1, ind: 1, nt: 'Parecida a la pirita, más pálida. Se deteriora con la humedad.' },
+  { id: 'calcopirita', n: 'Calcopirita', f: 'CuFeS₂', h: [3.5, 4], d: [4.1, 4.3], br: 'metalico', co: 'dorado', ra: 'negra', tr: 'opaco', ha: 'masivo equidimensional', mg: 'ninguno debil~', rg: 'irisado sulfuros_visibles oxidacion', p: 12, ind: 2, eco: 'mena', nt: 'Amarillo latón más intenso que la pirita; se raya con un cuchillo y suele irisarse.' },
+  { id: 'bornita', n: 'Bornita', f: 'Cu₅FeS₄', h: [3, 3], d: [4.9, 5.3], br: 'metalico', co: 'marron dorado~ violeta~ azul~', ra: 'gris negra~', tr: 'opaco', ha: 'masivo', rg: 'irisado', p: 1.5, col: 1, ind: 2, eco: 'mena esp', nt: 'Bronce que se tiñe de azul y violeta al aire.' },
+  { id: 'pirrotita', n: 'Pirrotita', f: 'Fe₁₋ₓS', h: [3.5, 4.5], d: [4.58, 4.65], br: 'metalico', co: 'dorado marron', ra: 'negra gris~', tr: 'opaco', ha: 'masivo', mg: 'fuerte debil~', rg: '', p: 4, ind: 2, eco: 'mena', nt: 'Bronce rojizo y magnética, a diferencia de la pirita.' },
+  { id: 'galena', n: 'Galena', f: 'PbS', h: [2.5, 2.5], d: [7.4, 7.6], br: 'metalico', co: 'gris plateado', ra: 'gris', tr: 'opaco', ha: 'cubico masivo', rg: 'caras_planas exfoliacion', p: 5, col: 1, ind: 2, eco: 'mena esp', pel: 'plomo', nt: 'Muy pesada y se parte en cubos.' },
+  { id: 'esfalerita', n: 'Esfalerita', f: '(Zn,Fe)S', h: [3.5, 4], d: [3.9, 4.1], br: 'resinoso adamantino submetalico~', co: 'marron negro amarillo~ rojo~ verde~', ra: 'marron amarilla~ blanca~', tr: 'translucido opaco transparente~', ha: 'masivo equidimensional', rg: 'exfoliacion caras_planas', p: 3, col: 1, ind: 2, eco: 'mena esp', nt: 'Brillo resinoso, no metálico; olor a azufre al rayarla.' },
+  { id: 'molibdenita', n: 'Molibdenita', f: 'MoS₂', h: [1, 1.5], d: [4.62, 5.06], br: 'metalico', co: 'gris plateado', ra: 'gris', tr: 'opaco', ha: 'laminar masivo', rg: 'exfoliacion', p: 1, col: 1, ind: 2, eco: 'mena', nt: 'Hojas flexibles que marcan papel. Se parece al grafito, pero es mucho más pesada.' },
+  { id: 'estibina', n: 'Estibina', f: 'Sb₂S₃', h: [2, 2], d: [4.63, 4.68], br: 'metalico', co: 'gris plateado', ra: 'gris', tr: 'opaco', ha: 'prismatico fibroso masivo', rg: 'estrias exfoliacion', p: 0.8, col: 1, ind: 2, eco: 'mena esp', pel: 'antimonio', nt: 'Agujas grises estriadas; funde con una llama de vela.' },
+  { id: 'arsenopirita', n: 'Arsenopirita', f: 'FeAsS', h: [5.5, 6], d: [5.9, 6.2], br: 'metalico', co: 'plateado gris', ra: 'negra', tr: 'opaco', ha: 'prismatico masivo', rg: 'caras_planas', p: 3, ind: 2, eco: 'mena', pel: 'arsenico', nt: 'Blanco plateado y pesada; huele a ajo al golpearla o calentarla. Contiene arsénico.' },
+  { id: 'cinabrio', n: 'Cinabrio', f: 'HgS', h: [2, 2.5], d: [8, 8.2], br: 'adamantino submetalico~ terroso~', co: 'rojo', ra: 'roja', tr: 'translucido opaco', ha: 'masivo terroso', rg: '', p: 0.5, col: 1, ind: 2, eco: 'mena esp', pel: 'mercurio', nt: 'Rojo vivo y muy pesado. Contiene mercurio.' },
+  { id: 'rejalgar', n: 'Rejalgar', f: 'As₄S₄', h: [1.5, 2], d: [3.5, 3.6], br: 'resinoso graso', co: 'naranja rojo', ra: 'roja amarilla~', tr: 'translucido transparente~', ha: 'masivo prismatico', rg: '', p: 0.4, col: 1, ind: 2, eco: 'esp', pel: 'arsenico', nt: 'Naranja rojizo; se degrada con la luz. Contiene arsénico.' },
+  { id: 'oropimente', n: 'Oropimente', f: 'As₂S₃', h: [1.5, 2], d: [3.49, 3.52], br: 'resinoso nacarado', co: 'amarillo', ra: 'amarilla', tr: 'translucido', ha: 'masivo laminar', rg: 'exfoliacion', p: 0.4, col: 1, ind: 2, eco: 'esp', pel: 'arsenico', nt: 'Amarillo limón en hojas flexibles. Contiene arsénico.' },
+  { id: 'pentlandita', n: 'Pentlandita', f: '(Fe,Ni)₉S₈', h: [3.5, 4], d: [4.6, 5], br: 'metalico', co: 'dorado marron~', ra: 'marron', tr: 'opaco', ha: 'masivo', mg: 'debil ninguno~', rg: '', p: 0.4, ind: 2, eco: 'mena', nt: 'Mena de níquel, casi siempre mezclada con pirrotita.' },
+  // Metales nativos y no metales
+  { id: 'oro', n: 'Oro nativo', f: 'Au', h: [2.5, 3], d: [15, 19.3], br: 'metalico', co: 'dorado', ra: 'amarilla', tr: 'opaco', ha: 'masivo dendritico', ml: 'maleable', rg: '', p: 0.15, col: 1, ind: 2, eco: 'mena esp', na: 1, nt: 'Blando y maleable (se marca con un clavo), muy pesado (>15) y no se rompe en trocitos.' },
+  { id: 'plata', n: 'Plata nativa', f: 'Ag', h: [2.5, 3], d: [10.1, 11.1], br: 'metalico', co: 'plateado gris~ negro~', ra: 'gris', tr: 'opaco', ha: 'dendritico masivo', ml: 'maleable', rg: '', p: 0.1, col: 1, ind: 2, eco: 'mena esp', na: 1, nt: 'Metal blando y maleable; se empaña de negro.' },
+  { id: 'cobre_nativo', n: 'Cobre nativo', f: 'Cu', h: [2.5, 3], d: [8.8, 8.95], br: 'metalico', co: 'rojo dorado~ marron~ verde~', ra: 'roja', tr: 'opaco', ha: 'dendritico masivo', ml: 'maleable', rg: 'oxidacion', p: 0.5, col: 1, ind: 2, eco: 'mena esp', nt: 'Color cobre, maleable, con pátina verde.' },
+  { id: 'grafito', n: 'Grafito', f: 'C', h: [1, 2], d: [2.09, 2.23], br: 'metalico terroso~', co: 'negro gris', ra: 'negra gris~', tr: 'opaco', ha: 'laminar masivo terroso', rg: 'exfoliacion', p: 2, ind: 1, eco: 'mena', nt: 'Mancha los dedos y el papel; muy ligera.' },
+  { id: 'azufre', n: 'Azufre nativo', f: 'S', h: [1.5, 2.5], d: [2.05, 2.09], br: 'resinoso graso', co: 'amarillo', ra: 'blanca amarilla~', tr: 'transparente translucido', ha: 'masivo equidimensional', rg: '', p: 1, col: 1, ind: 2, eco: 'esp', nt: 'Amarillo brillante y frágil; olor característico al frotarlo o calentarlo.' },
+  // Otras menas y especímenes
+  { id: 'wolframita', n: 'Wolframita', f: '(Fe,Mn)WO₄', h: [4, 4.5], d: [7, 7.5], br: 'submetalico resinoso~', co: 'negro marron', ra: 'marron negra~', tr: 'opaco', ha: 'prismatico laminar', mg: 'debil ninguno~', rg: 'exfoliacion', p: 0.5, ind: 2, eco: 'mena', nt: 'Negra y muy pesada; mena de tungsteno.' },
+  { id: 'scheelita', n: 'Scheelita', f: 'CaWO₄', h: [4.5, 5], d: [5.9, 6.1], br: 'vitreo adamantino', co: 'blanco incoloro amarillo~ marron~ naranja~', ra: 'blanca', tr: 'transparente translucido', ha: 'equidimensional masivo', rg: 'caras_planas', p: 0.4, col: 1, ind: 2, eco: 'mena esp', nt: 'Clara y sorprendentemente pesada; fluoresce azul con UV.' },
+  { id: 'cerusita', n: 'Cerusita', f: 'PbCO₃', h: [3, 3.5], d: [6.5, 6.6], fz: 'debil ninguno~', br: 'adamantino vitreo', co: 'incoloro blanco gris~', ra: 'blanca', tr: 'transparente translucido', ha: 'prismatico masivo', rg: 'maclas', p: 0.8, col: 1, ind: 2, eco: 'esp mena', pel: 'plomo', nt: 'Blanca y densa (≈6,5); contiene plomo.' },
+  { id: 'vanadinita', n: 'Vanadinita', f: 'Pb₅(VO₄)₃Cl', h: [2.5, 3], d: [6.7, 7.1], br: 'resinoso adamantino~', co: 'rojo naranja~ marron~ amarillo~', ra: 'blanca amarilla~', tr: 'translucido transparente~ opaco~', ha: 'prismatico', rg: 'caras_planas', p: 0.3, col: 1, ind: 2, eco: 'esp', pel: 'plomo', nt: 'Prismas hexagonales rojos y muy densos; contiene plomo.' },
+  { id: 'wulfenita', n: 'Wulfenita', f: 'PbMoO₄', h: [2.5, 3], d: [6.5, 7], br: 'resinoso adamantino', co: 'naranja amarillo rojo~ marron~', ra: 'blanca', tr: 'transparente translucido', ha: 'laminar', rg: 'caras_planas', p: 0.3, col: 1, ind: 2, eco: 'esp', pel: 'plomo', nt: 'Láminas cuadradas naranjas muy densas; contiene plomo.' },
+  // Rocas
+  { id: 'granito', n: 'Granito', t: 'r', f: 'roca ígnea', h: [5.5, 7], d: [2.6, 2.8], br: 'vitreo', co: 'blanco gris rosa negro~', ra: 'blanca', tr: 'opaco translucido~', ha: 'masivo', rg: 'granos_gruesos', p: 90, nt: 'Granos visibles de cuarzo, feldespato y mica o hornblenda.' },
+  { id: 'basalto', n: 'Basalto', t: 'r', f: 'roca ígnea', h: [5.5, 6.5], d: [2.8, 3.1], br: 'terroso vitreo~', co: 'negro gris', ra: 'gris blanca~', tr: 'opaco', ha: 'masivo', mg: 'ninguno debil~', rg: 'grano_fino vesiculas', p: 45, nt: 'Oscura y de grano fino; a veces con burbujas. Puede dar atracción magnética débil.' },
+  { id: 'arenisca', n: 'Arenisca', t: 'r', f: 'roca sedimentaria', h: [3, 7], d: [2, 2.6], br: 'terroso vitreo~', co: 'marron blanco rojo~ gris~ amarillo~', ra: 'blanca', tr: 'opaco', ha: 'masivo', rg: 'bandeado granos_gruesos fosiles', p: 50, nt: 'Granos de arena cementados; se siente áspera.' },
+  { id: 'caliza', n: 'Caliza', t: 'r', f: 'roca sedimentaria', h: [3, 3.5], d: [2.5, 2.75], fz: 'fuerte', br: 'terroso', co: 'gris blanco marron~ negro~ amarillo~', ra: 'blanca', tr: 'opaco', ha: 'masivo', rg: 'fosiles bandeado grano_fino', p: 45, nt: 'Burbujea con vinagre o ácido; a menudo contiene fósiles.' },
+  { id: 'marmol', n: 'Mármol', t: 'r', f: 'roca metamórfica', h: [3, 4], d: [2.6, 2.8], fz: 'fuerte debil~', br: 'vitreo nacarado~', co: 'blanco gris rosa~ verde~ negro~ marron~', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo', rg: 'granos_gruesos bandeado', p: 15, nt: 'Cristales de calcita o dolomita entrelazados; brillo sacaroideo.' },
+  { id: 'cuarcita', n: 'Cuarcita', t: 'r', f: 'roca metamórfica', h: [6.5, 7], d: [2.62, 2.68], br: 'vitreo', co: 'blanco gris rosa~ marron~', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo', rg: 'conchoidal grano_fino', p: 25, nt: 'Rompe a través de los granos, no entre ellos; muy dura.' },
+  { id: 'esquisto', n: 'Esquisto, pizarra o filita', t: 'r', f: 'roca metamórfica', h: [2.5, 6], d: [2.6, 3], br: 'nacarado sedoso terroso~', co: 'gris verde negro marron', ra: 'blanca gris~', tr: 'opaco', ha: 'laminar', rg: 'exfoliacion bandeado', p: 40, nt: 'Se parte en láminas; brillo sedoso por micas finas.' },
+  { id: 'gneis', n: 'Gneis', t: 'r', f: 'roca metamórfica', h: [5.5, 7], d: [2.65, 2.95], br: 'vitreo', co: 'gris blanco negro rosa~', ra: 'blanca', tr: 'opaco', ha: 'masivo', rg: 'bandeado granos_gruesos', p: 30, nt: 'Bandas alternas claras y oscuras.' },
+  { id: 'lutita', n: 'Lutita o arcilita', t: 'r', f: 'roca sedimentaria', h: [1.5, 3.5], d: [1.9, 2.7], br: 'terroso', co: 'gris negro~ marron verde~ rojo~', ra: 'blanca gris~', tr: 'opaco', ha: 'laminar terroso masivo', rg: 'grano_fino fosiles bandeado', p: 30, nt: 'Grano muy fino, blanda; se deshace en láminas con el agua.' },
+  { id: 'obsidiana', n: 'Obsidiana', t: 'r', f: 'vidrio volcánico', h: [5, 5.5], d: [2.35, 2.45], br: 'vitreo', co: 'negro marron~ gris~ verde~', ra: 'blanca gris~', tr: 'translucido opaco', ha: 'masivo', rg: 'conchoidal', p: 3, col: 1, nt: 'Vidrio volcánico negro con fractura curva y bordes afilados.' },
+  // Materiales especiales, meteoritos y falsos positivos
+  { id: 'tectita', n: 'Tectita', t: 'x', f: 'vidrio de impacto', h: [5, 6], d: [2.3, 2.5], br: 'vitreo', co: 'negro verde marron', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo', rg: 'conchoidal', p: 0.15, col: 1, ind: 1, eco: 'esp', na: 1, nt: 'Gotas, discos o mancuernas de vidrio con superficie esculpida; no confundir con obsidiana ni con vidrio artificial.' },
+  { id: 'fulgurita', n: 'Fulgurita', t: 'x', f: 'vidrio de rayo', h: [6, 7], d: [2, 2.6], br: 'vitreo terroso~', co: 'gris marron blanco~ negro~', ra: 'blanca', tr: 'translucido opaco', ha: 'masivo', rg: 'tubular vesiculas', p: 0.1, col: 1, ind: 1, na: 1, nt: 'Tubo ramificado y rugoso por fuera, vítreo por dentro; se forma al caer un rayo en arena.' },
+  { id: 'condrita', n: 'Meteorito rocoso (condrita), posible', t: 'x', f: 'meteorito', h: [5, 6.5], d: [3.2, 3.8], br: 'terroso submetalico~', co: 'negro gris marron', ra: 'gris marron~', tr: 'opaco', ha: 'masivo', mg: 'debil fuerte', rg: 'costra regmaglipto metal_fresco condrulos', p: 0.05, col: 1, ind: 1, eco: 'esp', na: 1, nt: 'Costra de fusión delgada, interior gris con puntos metálicos y atracción magnética. Hay muchas rocas y escorias que la imitan.' },
+  { id: 'meteorito_hierro', n: 'Meteorito de hierro-níquel, posible', t: 'x', f: 'meteorito', h: [4, 5], d: [7.3, 7.9], br: 'metalico', co: 'gris negro marron~', ra: 'gris', tr: 'opaco', ha: 'masivo', mg: 'fuerte', ml: 'maleable', rg: 'costra regmaglipto metal_fresco', p: 0.03, col: 1, ind: 1, eco: 'esp', na: 1, nt: 'Muy pesado, magnético y con huellas de pulgar. Cualquier hierro o acero corroído se le parece.' },
+  { id: 'escoria', n: 'Escoria industrial', t: 'a', f: 'material artificial', h: [3, 6.5], d: [2.2, 4.5], br: 'vitreo terroso metalico~ submetalico~', co: 'negro gris marron verde~ azul~ rojo~', ra: 'gris blanca~ negra~', tr: 'opaco translucido~', ha: 'masivo', mg: 'debil ninguno~ fuerte~', rg: 'vesiculas bandeado costra', p: 40, nt: 'Burbujas, bordes fluidos y tonos azulados o verdosos son comunes; muy frecuente cerca de minas, fundiciones y vías.' },
+  { id: 'hormigon', n: 'Ladrillo, cerámica u hormigón', t: 'a', f: 'material artificial', h: [3, 6], d: [1.6, 2.6], br: 'terroso', co: 'rojo naranja marron gris', ra: 'blanca roja~', tr: 'opaco', ha: 'masivo terroso~', rg: 'grano_fino granos_gruesos', p: 20, nt: 'Textura uniforme sin cristales; a veces con huecos o gravilla.' },
+  { id: 'vidrio', n: 'Vidrio artificial', t: 'a', f: 'material artificial', h: [5, 5.5], d: [2.4, 2.6], br: 'vitreo', co: 'incoloro verde azul marron negro~ amarillo~', ra: 'blanca', tr: 'transparente translucido', ha: 'masivo', rg: 'conchoidal vesiculas', p: 15, nt: 'Imita gemas y obsidiana; burbujas esféricas y bordes pulidos por el agua (vidrio de playa).' },
+  { id: 'hierro_corroido', n: 'Hierro o acero corroído', t: 'a', f: 'material artificial', h: [4, 5.5], d: [7.4, 7.9], br: 'metalico terroso~', co: 'marron negro gris rojo~', ra: 'gris negra~ roja~', tr: 'opaco', ha: 'masivo', mg: 'fuerte', ml: 'maleable', rg: 'oxidacion', p: 6, nt: 'Se parece a un meteorito de hierro; la oxidación se desprende en escamas y suele haber formas de tornillo, clavo o pieza.' }
+];
+
+/* ---------- Preparación de la base ---------- */
+
+const MAG_ORD = ['ninguno', 'debil', 'fuerte'];
+const ORDINALES = { mag: MAG_ORD, fizz: MAG_ORD };
+const CAMPO = { brillo: 'br', color: 'co', raya: 'ra', transp: 'tr', habito: 'ha', mag: 'mg', fizz: 'fz', mal: 'ml' };
+const DEFECTO = { mg: 'ninguno', fz: 'ninguno', ml: 'quebradizo' };
+const PISO = { brillo: 0.06, color: 0.12, transp: 0.08, habito: 0.06, mag: 0.02, raya: 0.04, fizz: 0.04, mal: 0.05 };
+const PESO = { brillo: 0.8, color: 0.55, transp: 0.7, habito: 0.65, mag: 1, raya: 1, fizz: 1, mal: 1, dureza: 1, densidad: 1, rasgo: 0.8 };
+const OTRO_FRACCION = 0.12;
+const OTRO_ESCALA = 0.8;
+const OTRO_PISO = 0.03;
+
+function tokens(s) {
+  const main = [], alt = [];
+  (s || '').split(/\s+/).filter(Boolean).forEach(t => (t.endsWith('~') ? alt.push(t.slice(0, -1)) : main.push(t)));
+  return { main, alt };
+}
+
+function preparar(m) {
+  const tk = {};
+  for (const k of Object.keys(CAMPO)) tk[k] = tokens(m[CAMPO[k]] || DEFECTO[CAMPO[k]]);
+  return Object.assign({}, m, {
+    t: m.t || 'm', tk, rgset: new Set((m.rg || '').split(/\s+/).filter(Boolean)),
+    eco: (m.eco || '').split(/\s+/).filter(Boolean), pel: (m.pel || '').split(/\s+/).filter(Boolean),
+    col: m.col || 0, ind: m.ind || 0, na: m.na || 0
+  });
+}
+
+const BASE = MINERALES.map(preparar);
+const PRIOR_TOTAL = BASE.reduce((s, m) => s + m.p, 0);
+const OTRO = { id: 'otro', n: 'Otro / no está en la base', p: PRIOR_TOTAL * OTRO_FRACCION / (1 - OTRO_FRACCION), eco: [], pel: [], rgset: new Set(), col: 0, ind: 0, na: 0, t: 'o' };
+
+function porId(id) { return id === 'otro' ? OTRO : BASE.find(m => m.id === id); }
+
+/* ---------- Verosimilitud ---------- */
+
+function lCat(k, tk, v) {
+  if (tk.main.includes(v)) return 0.9;
+  if (tk.alt.includes(v)) return 0.3;
+  let l = PISO[k];
+  const ord = ORDINALES[k];
+  if (ord) {
+    const i = ord.indexOf(v);
+    if (tk.main.some(x => Math.abs(ord.indexOf(x) - i) === 1)) l = Math.max(l, 0.2);
+  }
+  return l;
+}
+
+function lRango(obs, ref, esc, piso) {
+  const lo = Math.max(obs[0], ref[0]), hi = Math.min(obs[1], ref[1]);
+  if (hi >= lo) {
+    const wmin = Math.min(obs[1] - obs[0], ref[1] - ref[0]);
+    const f = wmin <= 1e-9 ? 1 : Math.min(1, (hi - lo) / wmin);
+    return piso + (0.95 - piso) * f;
+  }
+  return Math.max(piso * 0.1, piso * Math.exp(-(lo - hi) / esc));
+}
+
+function lDensidad(obs, ref) {
+  const mid = (ref[0] + ref[1]) / 2;
+  return lRango(obs, ref, Math.max(0.15, 0.04 * mid), 0.02);
+}
+
+const cacheOtro = new Map();
+
+/* «Otro» se comporta como un mineral típico de la base: su verosimilitud es el promedio ponderado por frecuencia. */
+function lOtro(k, v) {
+  const clave = k + '|' + JSON.stringify(v);
+  if (!cacheOtro.has(clave)) {
+    let s = 0;
+    for (const m of BASE) s += m.p * verosimilitud(m, k, v);
+    cacheOtro.set(clave, Math.max(OTRO_PISO, OTRO_ESCALA * s / PRIOR_TOTAL));
+  }
+  return cacheOtro.get(clave);
+}
+
+/* Verosimilitud de una observación (kind, valor) bajo un candidato. */
+function verosimilitud(m, k, v) {
+  if (m.id === 'otro') return lOtro(k, v);
+  if (k === 'dureza') return lRango(v, m.h, 1, 0.03);
+  if (k === 'densidad') return lDensidad(v, m.d);
+  if (k === 'rasgo') return m.rgset.has(v) ? 0.8 : 0.1;
+  return lCat(k, m.tk[k], v);
+}
+
+function agrupar(obs) {
+  const g = {};
+  for (const o of obs) (g[o.k] = g[o.k] || []).push(o);
+  return g;
+}
+
+/* Verosimilitud conjunta de las observaciones agrupadas para un candidato (en logaritmo). */
+function logVerosimilitud(m, grupos) {
+  let lp = 0;
+  for (const k of Object.keys(grupos)) {
+    const lst = grupos[k];
+    const w = PESO[k] * (lst.every(o => o.src === 'ia') ? 0.5 : 1);
+    if (k === 'rasgo') {
+      for (const o of lst) lp += w * Math.log(verosimilitud(m, k, o.v));
+    } else if (k === 'dureza' || k === 'densidad' || k === 'mag' || k === 'raya' || k === 'fizz' || k === 'mal') {
+      const o = lst[lst.length - 1];
+      lp += w * Math.log(verosimilitud(m, k, o.v));
+    } else {
+      lp += w * Math.log(Math.max(...lst.map(o => verosimilitud(m, k, o.v))));
+    }
+  }
+  return lp;
+}
+
+function normalizar(items) {
+  const mx = Math.max(...items.map(x => x.lp));
+  let s = 0;
+  for (const x of items) { x.p = Math.exp(x.lp - mx); s += x.p; }
+  for (const x of items) x.p /= s;
+  return items.sort((a, b) => b.p - a.p);
+}
+
+/* Reparto de probabilidad relativa entre candidatos. Incluye siempre «Otro». */
+function calcular(obs) {
+  const grupos = agrupar(obs);
+  const items = BASE.concat([OTRO]).map(m => ({ id: m.id, m, lp: Math.log(m.p) + logVerosimilitud(m, grupos) }));
+  return normalizar(items);
+}
+
+function entropia(items) {
+  let h = 0;
+  for (const x of items) if (x.p > 0) h -= x.p * Math.log2(x.p);
+  return h;
+}
+
+/* ---------- Confianza ---------- */
+
+function contarFisicas(obs) {
+  return new Set(obs.filter(o => KIND_FISICO.includes(o.k) && o.src !== 'ia').map(o => o.k)).size;
+}
+
+function banda(post, obs) {
+  const top = post[0];
+  const T = contarFisicas(obs);
+  const segundo = post[1] ? post[1].p : 0;
+  const razon = segundo > 0 ? top.p / segundo : Infinity;
+  if (top.id === 'otro') return { nivel: 'baja', T, motivo: 'La opción más probable es «otro»: lo observado no encaja bien con la base.' };
+  if (T === 0) return { nivel: 'baja', T, motivo: 'Solo hay observación visual; con eso la confianza no puede pasar de baja.' };
+  if (T >= 2 && top.p >= 0.75 && razon >= 3) return { nivel: 'alta', T, motivo: 'Dos o más pruebas físicas independientes apuntan al mismo candidato.' };
+  if (top.p >= 0.4) return { nivel: 'media', T, motivo: T >= 2 ? 'Hay evidencia física, pero queda otro candidato cercano.' : 'Hay una prueba física; faltan más para separar candidatos.' };
+  return { nivel: 'baja', T, motivo: 'Los candidatos principales siguen muy parejos.' };
+}
+
+/* ---------- Interés, mercado y seguridad ---------- */
+
+function suma(post, fn) { return post.reduce((s, x) => (x.id !== 'otro' && fn(x.m) ? s + x.p : s), 0); }
+
+function evaluar(post, obs, opts) {
+  const T = contarFisicas(obs);
+  const otro = post.find(x => x.id === 'otro').p;
+  const naMasa = suma(post, m => m.na === 1);
+  const geoPuntaje = suma(post, m => m.ind === 2) + 0.35 * suma(post, m => m.ind === 1);
+  const ecoMasa = suma(post, m => m.eco.length > 0 && (m.ind === 2 || m.eco.some(c => c !== 'mena')));
+  const colMasa = suma(post, m => m.col === 1);
+  const noAlterar = !!(opts && opts.noAlterarManual) || naMasa >= (T >= 1 ? 0.25 : 0.4);
+  const geo = geoPuntaje >= 0.25 && T >= 1 ? 'alto' : geoPuntaje >= 0.12 ? 'medio' : 'bajo';
+  const eco = ecoMasa >= 0.3 && T >= 1;
+  const interesante = colMasa >= 0.3 || geo !== 'bajo' || naMasa >= 0.05 || (otro >= 0.35 && T >= 2);
+  let nivel = 'comun';
+  if (noAlterar) nivel = 'noalterar';
+  else if (geo === 'alto') nivel = 'geo';
+  else if (eco) nivel = 'eco';
+  else if (interesante) nivel = 'interesante';
+  return { nivel, noAlterar, geo, eco, interesante, T, naMasa, geoPuntaje, ecoMasa, colMasa, otro };
+}
+
+const RAZON_TEXTO = {
+  gema: 'posible gema', mena: 'posible mena metálica', esp: 'posible espécimen de colección',
+  orn: 'posible roca ornamental', ind: 'puede indicar mineralización o un proceso geológico',
+  na: 'ejemplar delicado o raro: conviene no alterarlo', col: 'interés de coleccionismo'
+};
+
+/* Razones por las que sería un error botar la muestra, con los candidatos que las motivan. */
+function razones(post) {
+  const out = [];
+  for (const x of post) {
+    if (x.id === 'otro' || x.p < 0.04) continue;
+    const m = x.m, r = [];
+    if (m.eco.includes('gema')) r.push(RAZON_TEXTO.gema);
+    if (m.eco.includes('mena')) r.push(RAZON_TEXTO.mena);
+    if (m.eco.includes('esp')) r.push(RAZON_TEXTO.esp);
+    if (m.eco.includes('orn')) r.push(RAZON_TEXTO.orn);
+    if (m.ind === 2) r.push(RAZON_TEXTO.ind);
+    if (m.na) r.push(RAZON_TEXTO.na);
+    if (!r.length && m.col) r.push(RAZON_TEXTO.col);
+    if (r.length) out.push({ id: m.id, nombre: m.n, p: x.p, motivos: r });
+  }
+  return out.slice(0, 5);
+}
+
+function mercado(post, obs) {
+  const T = contarFisicas(obs);
+  const clases = {};
+  for (const x of post) if (x.id !== 'otro') for (const c of x.m.eco) if (MERCADO[c]) clases[c] = (clases[c] || 0) + x.p;
+  const orden = Object.keys(clases).filter(c => clases[c] >= 0.05).sort((a, b) => clases[b] - clases[a]);
+  return { T, estimable: T >= 1 && orden.length > 0, clases: orden.map(c => ({ id: c, masa: clases[c], nombre: MERCADO[c].nombre, factores: MERCADO[c].factores })) };
+}
+
+function seguridad(post, obs) {
+  const tags = new Set();
+  for (const x of post) if (x.id !== 'otro' && x.p >= 0.08) x.m.pel.forEach(t => tags.add(t));
+  const fibroso = obs.some(o => o.k === 'habito' && o.v === 'fibroso');
+  if (fibroso) tags.add('asbesto');
+  const otro = post.find(x => x.id === 'otro');
+  if (otro && otro.p >= 0.3) tags.add('desconocida');
+  return [...tags].map(t => ({ tag: t, texto: PELIGROS[t] }));
+}
+
+/* ---------- Pruebas recomendadas ---------- */
+
+const PRUEBAS = {
+  mag: { nombre: 'Imán', equipo: ['iman'], costo: 0.1, destructivo: false },
+  densidad: { nombre: 'Densidad', equipo: ['bascula'], costo: 0.6, destructivo: false },
+  raya: { nombre: 'Raya en porcelana', equipo: ['porcelana'], costo: 0.25, destructivo: true },
+  fizz: { nombre: 'Gota de vinagre', equipo: ['vinagre'], costo: 0.3, destructivo: true },
+  dureza: { nombre: 'Dureza (rayado)', equipo: ['moneda', 'cuchillo', 'vidrio'], cualquiera: true, costo: 0.5, destructivo: true },
+  mal: { nombre: 'Maleabilidad', equipo: ['cuchillo'], costo: 0.5, destructivo: true }
+};
+
+function resultadosPosibles(k) {
+  if (k === 'dureza') return DUREZA_OPCIONES.map(o => ({ v: o.rango, etiqueta: o.texto, id: o.id }));
+  if (k === 'densidad') return DENSIDAD_BINS.map(b => ({ v: b, etiqueta: b[0] + '–' + b[1] + ' g/cm³' }));
+  return Object.keys(VOC[k]).map(v => ({ v, etiqueta: VOC[k][v] }));
+}
+
+function equipoDisponible(k, kit) {
+  const def = PRUEBAS[k];
+  if (!def) return true;
+  return def.cualquiera ? def.equipo.some(e => kit[e]) : def.equipo.every(e => kit[e]);
+}
+
+function describirDiferencia(k, a, b) {
+  const texto = m => {
+    if (k === 'dureza') return 'dureza ' + m.h.join('–');
+    if (k === 'densidad') return 'densidad ' + m.d.join('–');
+    return (m.tk[k].main.map(v => VOC[k][v]).join(' o ') || '—').toLowerCase();
+  };
+  return a.n + ': ' + texto(a) + '. ' + b.n + ': ' + texto(b) + '.';
+}
+
+/* Ordena las pruebas por ganancia esperada de información dividida por su costo. */
+function sugerirPruebas(obs, kit, opts) {
+  const post = calcular(obs);
+  const h0 = entropia(post);
+  const hechas = new Set(obs.map(o => o.k));
+  const bloqueadas = opts && opts.noAlterar;
+  const candidatos = Object.keys(PRUEBAS).concat(KIND_VISUAL).filter(k => !hechas.has(k));
+  const res = [];
+  for (const k of candidatos) {
+    const def = PRUEBAS[k];
+    const disponible = equipoDisponible(k, kit);
+    const oculta = !!(def && def.destructivo && bloqueadas);
+    const salidas = resultadosPosibles(k);
+    const L = post.map(x => salidas.map(s => Math.pow(verosimilitud(x.m, k, s.v), PESO[k])));
+    const Ln = L.map(fila => { const t = fila.reduce((a, b) => a + b, 0); return fila.map(v => v / t); });
+    let hEsp = 0;
+    const detalle = salidas.map((s, j) => {
+      let pj = 0;
+      post.forEach((x, i) => { pj += x.p * Ln[i][j]; });
+      const nuevo = post.map((x, i) => ({ id: x.id, m: x.m, p: pj > 0 ? x.p * Ln[i][j] / pj : 0 }));
+      nuevo.sort((a, b) => b.p - a.p);
+      hEsp += pj * entropia(nuevo);
+      return { v: s.v, etiqueta: s.etiqueta, id: s.id, prob: pj, top: { id: nuevo[0].id, nombre: nuevo[0].m.n, p: nuevo[0].p } };
+    });
+    const ganancia = Math.max(0, h0 - hEsp);
+    const costo = def ? def.costo : 0.2;
+    const top = post.filter(x => x.id !== 'otro').slice(0, 2);
+    res.push({
+      k, nombre: KIND_NAMES[k], ganancia, costo, puntaje: ganancia / (0.4 + costo),
+      destructivo: !!(def && def.destructivo), visual: !def, disponible, oculta, salidas: detalle,
+      porque: top.length === 2 ? describirDiferencia(k, top[0].m, top[1].m) : ''
+    });
+  }
+  return res.sort((a, b) => b.puntaje - a.puntaje);
+}
+
+/* ---------- Densidad ---------- */
+
+/* Peso en aire y lectura al sumergir la muestra colgada de un hilo en un vaso con agua tarado. */
+function densidadSumergida(aire, lectura, res) {
+  if (!(aire > 0) || !(lectura > 0)) return null;
+  const r = res || 0;
+  const lo = (aire - r) / (lectura + r);
+  const hi = lectura - r > 0 ? (aire + r) / (lectura - r) : Infinity;
+  return { valor: aire / lectura, lo, hi: Math.min(hi, 30) };
+}
+
+function densidadDesplazamiento(masa, v1, v2, resV) {
+  const v = v2 - v1;
+  if (!(masa > 0) || !(v > 0)) return null;
+  const r = resV || 0;
+  const hi = v - r > 0 ? masa / (v - r) : Infinity;
+  return { valor: masa / v, lo: masa / (v + r), hi: Math.min(hi, 30) };
+}
+
+/* ---------- Calidad de fotografía ---------- */
+
+function nitidez(gris, w, h) {
+  let s = 0, s2 = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      const l = 4 * gris[i] - gris[i - 1] - gris[i + 1] - gris[i - w] - gris[i + w];
+      s += l; s2 += l * l; n++;
+    }
+  }
+  return n ? s2 / n - (s / n) * (s / n) : 0;
+}
+
+function exposicion(gris) {
+  let suma_ = 0, osc = 0, que = 0;
+  for (let i = 0; i < gris.length; i++) {
+    const g = gris[i];
+    suma_ += g;
+    if (g < 25) osc++;
+    if (g > 240) que++;
+  }
+  const n = gris.length || 1;
+  return { media: suma_ / n, oscuro: osc / n, quemado: que / n };
+}
+
+function juzgarFoto(nit, exp) {
+  const enfoque = nit >= 150 ? 'bueno' : nit >= 40 ? 'regular' : 'pobre';
+  const luz = exp.media < 55 || exp.oscuro > 0.5 ? 'oscura' : exp.quemado > 0.25 ? 'quemada' : 'ok';
+  return { enfoque, luz, nitidez: Math.round(nit) };
+}
+
+/* ---------- Descripción asistida por IA (validación) ---------- */
+
+/* Conserva solo valores del vocabulario controlado; ignora cualquier otro texto. */
+function validarIA(resp) {
+  const out = [];
+  if (!resp || typeof resp !== 'object') return out;
+  const lim = { brillo: 2, color: 3, transp: 2, habito: 3, rasgo: 5 };
+  for (const k of Object.keys(lim)) {
+    const lista = Array.isArray(resp[k]) ? resp[k] : typeof resp[k] === 'string' ? [resp[k]] : [];
+    const vistos = new Set();
+    for (const v of lista) {
+      if (typeof v === 'string' && Object.prototype.hasOwnProperty.call(VOC[k], v) && !vistos.has(v) && vistos.size < lim[k]) {
+        vistos.add(v);
+        out.push({ k, v, src: 'ia' });
+      }
+    }
+  }
+  return out;
+}
+
+function promptIA() {
+  const lista = k => Object.keys(VOC[k]).join(', ');
+  return 'Eres un asistente que SOLO describe lo que se ve en fotografías de una roca o mineral. No identifiques el mineral ni inventes propiedades. ' +
+    'Responde únicamente con un objeto JSON con estas claves y valores elegidos exactamente de las listas (usa [] si no se puede juzgar): ' +
+    '"brillo" (' + lista('brillo') + '), "color" (' + lista('color') + '), "transp" (' + lista('transp') + '), ' +
+    '"habito" (' + lista('habito') + '), "rasgo" (' + lista('rasgo') + '). Incluye un valor solo si es claramente visible.';
+}
+
+/* ---------- Registro de aciertos ---------- */
+
+function resumenAciertos(muestras) {
+  const con = muestras.filter(m => m.idFinal && m.idIA);
+  const top1 = con.filter(m => m.idIA.top === m.idFinal.id).length;
+  const top3 = con.filter(m => m.idIA.top3.includes(m.idFinal.id)).length;
+  return { total: con.length, top1, top3, errores: con.filter(m => m.idIA.top !== m.idFinal.id) };
+}
+/*ENGINE_END*/
+
+/* ---------- Almacenamiento local (IndexedDB con respaldo en memoria) ---------- */
+
+const Almacen = (() => {
+  let db = null, enMemoria = false;
+  const mem = { muestras: new Map(), fotos: new Map(), meta: new Map() };
+  const seq = { muestras: 0, fotos: 0 };
+  const req = r => new Promise((ok, ko) => { r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); });
+  const clave = (s, v) => (s === 'meta' ? v.k : v.id);
+
+  function abrir() {
+    return new Promise(ok => {
+      try {
+        const r = indexedDB.open('rocas', 1);
+        r.onupgradeneeded = () => {
+          const d = r.result;
+          d.createObjectStore('muestras', { keyPath: 'id', autoIncrement: true });
+          d.createObjectStore('fotos', { keyPath: 'id', autoIncrement: true }).createIndex('muestra', 'muestra');
+          d.createObjectStore('meta', { keyPath: 'k' });
+        };
+        r.onsuccess = () => { db = r.result; ok(true); };
+        r.onerror = () => { enMemoria = true; ok(false); };
+        r.onblocked = () => { enMemoria = true; ok(false); };
+      } catch (e) { enMemoria = true; ok(false); }
+    });
+  }
+
+  return {
+    abrir,
+    get enMemoria() { return enMemoria; },
+    async listar(s) { return enMemoria ? [...mem[s].values()] : req(db.transaction(s).objectStore(s).getAll()); },
+    async leer(s, k) { return enMemoria ? mem[s].get(k) : req(db.transaction(s).objectStore(s).get(k)); },
+    async guardar(s, v) {
+      if (enMemoria) {
+        if (s !== 'meta' && v.id == null) v.id = ++seq[s];
+        mem[s].set(clave(s, v), v);
+        return clave(s, v);
+      }
+      const k = await req(db.transaction(s, 'readwrite').objectStore(s).put(v));
+      if (s !== 'meta' && v.id == null) v.id = k;
+      return k;
+    },
+    async borrar(s, k) { if (enMemoria) mem[s].delete(k); else await req(db.transaction(s, 'readwrite').objectStore(s).delete(k)); },
+    async fotosDe(id) {
+      if (enMemoria) return [...mem.fotos.values()].filter(f => f.muestra === id);
+      return req(db.transaction('fotos').objectStore('fotos').index('muestra').getAll(id));
+    },
+    async vaciar() {
+      for (const s of ['muestras', 'fotos', 'meta']) {
+        if (enMemoria) mem[s].clear(); else await req(db.transaction(s, 'readwrite').objectStore(s).clear());
+      }
+    }
+  };
+})();
+
+/* ---------- Estado ---------- */
+
+const AJUSTES_BASE = {
+  kit: { iman: true, porcelana: true, moneda: true, cuchillo: true, vidrio: true, vinagre: true, bascula: false },
+  tema: 'auto', iaKey: '', iaModelo: 'gemini-2.5-flash', contador: 0, ultimoRespaldo: null, exportarUbicaciones: false
+};
+
+const S = { muestras: [], ajustes: JSON.parse(JSON.stringify(AJUSTES_BASE)), fotos: new Map(), urls: new Map(), ruta: 'hallazgos', filtro: 'todas', busqueda: '', destructivas: new Set(), msg: null, msgTs: 0 };
+
+const SLOTS = [
+  { id: 'general', t: 'Vista general', d: 'Toda la muestra sobre un fondo liso y neutro, con luz de día indirecta.', base: true },
+  { id: 'otra_cara', t: 'Otra cara', d: 'Gira la muestra y fotografía la cara opuesta.', base: true },
+  { id: 'macro', t: 'Macro con escala', d: 'Acércate a la textura o a los cristales con una regla o moneda junto a la muestra.', base: true },
+  { id: 'fractura', t: 'Superficie fresca', d: 'Si hay una cara rota recientemente, fotografíala sin limpiarla.' },
+  { id: 'lateral', t: 'Luz lateral', d: 'Ilumina desde un lado, casi rasante, para resaltar relieve y brillo.' },
+  { id: 'transmitida', t: 'Luz transmitida', d: 'Solo si es translúcida: pon la linterna del celular detrás de la muestra.' },
+  { id: 'mojada', t: 'Mojada', d: 'Humedece la superficie con agua limpia para resaltar color y textura.' }
+];
+
+const NIVELES = {
+  comun: { t: 'COMÚN', c: 'c0', d: 'No se observa nada que justifique más análisis por ahora.' },
+  interesante: { t: 'INTERESANTE', c: 'c1', d: 'Vale la pena identificarla mejor o conservarla.' },
+  eco: { t: 'POTENCIAL ECONÓMICO', c: 'c2', d: 'Hay características compatibles con un mineral o espécimen comercialmente interesante.' },
+  geo: { t: 'ALTO INTERÉS GEOLÓGICO', c: 'c3', d: 'Podría indicar un proceso geológico o una mineralización: el interés está más en el lugar que en la muestra.' },
+  noalterar: { t: 'NO ALTERAR', c: 'c4', d: 'No cortar, pulir, limpiar agresivamente ni hacer pruebas destructivas.' }
+};
+
+const ESTADOS = { conservada: 'Conservada', experto: 'Enviada a experto', descartada: 'Descartada' };
+
+const INSTRUCCIONES = {
+  mag: 'Acerca un imán fuerte (mejor de neodimio). Fuerte: la muestra salta hacia el imán o lo sostiene. Débil: solo se mueve si está suspendida o en polvo fino. Ninguna: no se mueve.',
+  raya: 'Frota una arista o una zona poco visible contra el reverso sin esmalte de una baldosa de cerámica blanca y mira el color del polvo, no el de la piedra. Si la muestra es más dura que la baldosa, el polvo suele verse blanco: elige Blanca.',
+  dureza: 'Elige un rincón poco visible, porque deja marca. Prueba en este orden y detente en el primer objeto que deja una raya real (no polvo que se limpia con el dedo): uña, moneda de cobre, cuchillo o clavo de acero, vidrio y cuarzo. Comprueba también si la muestra raya al objeto.',
+  densidad: 'Pesa la muestra seca. Pon un vaso con agua sobre la báscula y ponla en cero. Cuelga la muestra de un hilo fino y sumérgela sin tocar el fondo ni las paredes: la lectura es su volumen en cm³. Densidad = peso en aire ÷ lectura sumergida.',
+  fizz: 'Pon una gota de vinagre blanco en una zona poco visible o, mejor, sobre un poco de polvo raspado y mira con lupa. Burbujas claras suelen indicar calcita. Leves y lentas, dolomita u otros carbonatos. Sin burbujas, no es carbonato o la reacción es muy débil con vinagre.',
+  mal: 'Presiona una zona pequeña con la punta de un cuchillo o clavo. Maleable: se hunde o se marca como un metal blando (oro, plata, cobre). Quebradiza: salta en trocitos o se hace polvo (pirita, sulfuros).',
+  brillo: 'Gira la muestra bajo una luz y observa una cara fresca o limpia.',
+  color: 'Elige el color de la superficie fresca o limpia, no el de la costra de óxido.',
+  transp: 'Acerca la muestra a la linterna del celular.',
+  habito: 'Es la forma general de la muestra o de sus cristales.'
+};
+
+/* ---------- Utilidades ---------- */
+
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'on') for (const [ev, fn] of Object.entries(v)) e.addEventListener(ev, fn);
+    else if (k === 'value' || k === 'checked' || k === 'disabled') e[k] = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat(Infinity)) { if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+
+const corto = s => String(s).split(' (')[0];
+const num = (n, d = 2) => Number(n).toLocaleString('es', { maximumFractionDigits: d });
+const pct = p => (p < 0.005 ? '<1' : String(Math.round(p * 100)));
+const codigo = m => '#' + String(m.num).padStart(4, '0');
+const rangoTxt = r => (r[0] === r[1] ? num(r[0], 2) : num(r[0], 2) + '–' + num(r[1], 2));
+
+const TOAST_MS = 3200;
+
+function pintarToast() {
+  const t = document.getElementById('toast');
+  const resta = TOAST_MS - (Date.now() - S.msgTs);
+  if (!t || !S.msg || resta <= 0) return;
+  t.textContent = S.msg; t.hidden = false;
+  clearTimeout(pintarToast.t);
+  pintarToast.t = setTimeout(() => { t.hidden = true; }, resta);
+}
+
+function toast(texto) {
+  S.msg = texto; S.msgTs = Date.now();
+  pintarToast();
+}
+
+async function guardarAjustes() { await Almacen.guardar('meta', { k: 'ajustes', v: S.ajustes }); }
+
+async function guardarMuestra(m) { m.actualizado = Date.now(); await Almacen.guardar('muestras', m); }
+
+function aplicarTema() {
+  const r = document.documentElement;
+  if (S.ajustes.tema === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.ajustes.tema);
+}
+
+function urlFoto(f) {
+  if (!S.urls.has(f.id)) S.urls.set(f.id, URL.createObjectURL(f.blob));
+  return S.urls.get(f.id);
+}
+
+async function cargarFotos(id) {
+  const fs = await Almacen.fotosDe(id);
+  S.fotos.set(id, fs);
+  return fs;
+}
+
+/* ---------- Análisis de una muestra ---------- */
+
+function analisis(m) {
+  const post = calcular(m.obs);
+  const opts = { noAlterarManual: m.noAlterar };
+  const nivel = evaluar(post, m.obs, opts);
+  return { post, nivel, banda: banda(post, m.obs), seg: seguridad(post, m.obs), raz: razones(post), mer: mercado(post, m.obs) };
+}
+
+function nombreMuestra(m) {
+  if (m.nombre) return m.nombre;
+  if (m.idFinal) return m.idFinal.nombre;
+  if (m.obs.length) { const t = calcular(m.obs)[0]; return t.id === 'otro' ? 'Sin identificar' : t.m.n; }
+  return 'Sin analizar';
+}
+
+function etiquetaObs(o) {
+  if (o.l) return o.l;
+  if (o.k === 'rasgo') return VOC.rasgo[o.v];
+  if (o.k === 'mag') return 'Magnetismo: ' + VOC.mag[o.v].toLowerCase();
+  if (o.k === 'raya') return 'Raya: ' + corto(VOC.raya[o.v]).toLowerCase();
+  if (o.k === 'fizz') return 'Vinagre: ' + VOC.fizz[o.v].toLowerCase();
+  if (o.k === 'mal') return corto(VOC.mal[o.v]);
+  return KIND_NAMES[o.k] + ': ' + corto(VOC[o.k][o.v]).toLowerCase();
+}
+
+function cambiar(m, fn) {
+  m.obsPrev = m.obs.map(o => Object.assign({}, o));
+  fn();
+  return guardarMuestra(m).then(render);
+}
+
+function alternarObs(m, k, v) {
+  cambiar(m, () => {
+    const i = m.obs.findIndex(o => o.k === k && o.v === v);
+    if (i < 0) m.obs.push({ k, v, src: 'usuario' });
+    else if (m.obs[i].src === 'ia') m.obs[i].src = 'usuario';
+    else m.obs.splice(i, 1);
+  });
+}
+
+function registrar(m, k, v, etiqueta) {
+  cambiar(m, () => {
+    m.obs = m.obs.filter(o => o.k !== k);
+    m.obs.push({ k, v, src: 'usuario', l: etiqueta, t: Date.now() });
+  });
+}
+
+/* ---------- Ruteo ---------- */
+
+function ir(r) {
+  S.ruta = r;
+  try { if (location.hash !== '#' + r) history.pushState(null, '', '#' + r); } catch (e) { /* el marco puede impedir cambiar la URL */ }
+  render();
+  window.scrollTo(0, 0);
+}
+
+function leerRuta() {
+  const t = (location.hash || '').slice(1);
+  return /^(hallazgos|nueva|pruebas|favoritos|ajustes|m\d+-(fotos|observar|analisis|ficha))$/.test(t) ? t : null;
+}
+
+function parseRuta(r) {
+  const x = /^m(\d+)-(\w+)$/.exec(r);
+  return x ? { id: Number(x[1]), tab: x[2] } : null;
+}
+
+/* ---------- Componentes ---------- */
+
+function chip(texto, activo, onclick, ia) {
+  return h('button', { type: 'button', class: 'chip' + (activo ? ' on' : '') + (ia ? ' ia' : ''), 'aria-pressed': String(!!activo), on: { click: onclick } }, texto, ia ? h('i', { class: 'tag' }, 'IA') : null);
+}
+
+function pildora(nivel) {
+  const n = NIVELES[nivel];
+  return h('span', { class: 'pill ' + n.c }, n.t);
+}
+
+function seccion(titulo, ...kids) {
+  return h('section', { class: 'card' }, h('h3', {}, titulo), ...kids);
+}
+
+function vacio(titulo, texto, accion) {
+  return h('div', { class: 'vacio' }, h('h2', {}, titulo), h('p', {}, texto), accion);
+}
+
+/* ---------- Vistas: hallazgos, favoritos, nueva ---------- */
+
+function tarjetaMuestra(m) {
+  const a = m.obs.length ? analisis(m) : null;
+  const fs = S.fotos.get(m.id);
+  const foto = fs && fs.length ? h('img', { src: urlFoto(fs[0]), alt: '' }) : h('span', { class: 'ph' }, '◇');
+  return h('button', { type: 'button', class: 'item', on: { click: () => ir('m' + m.id + '-' + (m.obs.length ? 'analisis' : 'fotos')) } },
+    h('span', { class: 'thumb' }, foto),
+    h('span', { class: 'itxt' },
+      h('span', { class: 'ititle' }, h('span', { class: 'cod' }, codigo(m)), ' ', nombreMuestra(m)),
+      h('span', { class: 'isub' }, new Date(m.creado).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }), ' · ', ESTADOS[m.estado], m.idFinal ? ' · ' + (m.idFinal.estado === 'corregida' ? 'corregida' : 'confirmada') : '', m.ejemplo ? ' · EJEMPLO' : '')),
+    a ? pildora(a.nivel.nivel) : h('span', { class: 'pill c0 vac' }, 'SIN ANALIZAR'),
+    m.fav ? h('span', { class: 'estrella', 'aria-label': 'Favorita' }, '★') : null);
+}
+
+function vistaHallazgos() {
+  const filtros = [['todas', 'Todas'], ['conservada', 'Conservadas'], ['experto', 'Con experto'], ['descartada', 'Descartadas']];
+  const nCons = S.muestras.filter(m => m.estado === 'conservada').length;
+  const cabecera = h('div', { class: 'resumen' },
+    h('div', {}, h('b', { class: 'big' }, S.muestras.length), h('span', {}, ' hallazgos')),
+    h('div', {}, h('b', { class: 'big' }, nCons), h('span', {}, ' conservados')));
+  if (!S.muestras.length) {
+    return h('div', {},
+      vacio('Todavía no hay hallazgos', 'Fotografía una roca o mineral, registra lo que ves y las pruebas que hagas, y la app irá ajustando las hipótesis. Todo se guarda solo en este teléfono.',
+        h('div', { class: 'acciones' },
+          h('button', { class: 'btn pri', on: { click: () => ir('nueva') } }, 'Nuevo hallazgo'),
+          h('button', { class: 'btn', on: { click: crearEjemplo } }, 'Cargar un ejemplo'))),
+      h('p', { class: 'nota' }, 'El ejemplo es un registro ficticio (mineral oscuro y metálico, sin fotos) para recorrer el flujo antes de usar muestras reales. Puedes borrarlo después.'));
+  }
+  return h('div', {}, cabecera,
+    h('div', { class: 'buscar' }, h('input', { id: 'busqueda', type: 'search', placeholder: 'Buscar por nombre, número o nota', value: S.busqueda, on: { input: e => { S.busqueda = e.target.value; const v = document.getElementById('lista'); v.replaceChildren(...itemsLista()); } } })),
+    h('div', { class: 'chips fila' }, filtros.map(([k, t]) => chip(t, S.filtro === k, () => { S.filtro = k; render(); }))),
+    h('div', { class: 'lista', id: 'lista' }, itemsLista()));
+}
+
+function itemsLista() {
+  const q = S.busqueda.trim().toLowerCase();
+  const lista = S.muestras.filter(m => (S.filtro === 'todas' || m.estado === S.filtro) && (!q || (nombreMuestra(m) + ' ' + codigo(m) + ' ' + (m.notas || '')).toLowerCase().includes(q)));
+  return lista.length ? lista.map(tarjetaMuestra) : [h('p', { class: 'nota' }, 'Ningún hallazgo coincide con el filtro.')];
+}
+
+function vistaFavoritos() {
+  const lista = S.muestras.filter(m => m.fav);
+  if (!lista.length) return vacio('Sin favoritos', 'Marca con la estrella las muestras que quieras tener a mano desde la pestaña Ficha de cada hallazgo.', null);
+  return h('div', { class: 'lista' }, lista.map(tarjetaMuestra));
+}
+
+function vistaNueva() {
+  const pasos = [['Fotos', 'Captura guiada de 3 vistas básicas y hasta 4 opcionales.'], ['Observar', 'Elige brillo, color, transparencia, hábito y rasgos.'], ['Análisis', 'Candidatos, interés, seguridad y la prueba más útil.'], ['Pruebas', 'Imán, raya, dureza, densidad. Cada resultado reordena los candidatos.'], ['Ficha', 'Identificación final, notas y estado.']];
+  return h('div', {},
+    h('section', { class: 'card' }, h('h3', {}, 'Nuevo hallazgo'),
+      h('p', {}, 'La app no da un veredicto a partir de una foto. Compara lo que observas y mides con una base de minerales y te muestra qué es más compatible, qué falta por comprobar y por qué podría ser un error botarla.'),
+      h('ol', { class: 'pasos' }, pasos.map(([t, d]) => h('li', {}, h('b', {}, t), h('span', {}, d)))),
+      h('button', { class: 'btn pri ancho', on: { click: async () => { const m = await nuevaMuestra(); ir('m' + m.id + '-fotos'); } } }, 'Empezar')));
+}
+
+async function nuevaMuestra(ejemplo) {
+  S.ajustes.contador += 1;
+  await guardarAjustes();
+  const m = { num: S.ajustes.contador, creado: Date.now(), nombre: '', fav: false, estado: 'conservada', obs: [], obsPrev: [], notas: '', peso: '', tamano: '', fluor: '', ubic: { texto: '', lat: null, lng: null, privada: true }, idFinal: null, idIA: null, noAlterar: false, ejemplo: ejemplo === true };
+  await guardarMuestra(m);
+  S.muestras.unshift(m);
+  S.fotos.set(m.id, []);
+  return m;
+}
+
+async function crearEjemplo() {
+  const m = await nuevaMuestra(true);
+  m.nombre = 'Mineral oscuro y metálico (ejemplo)';
+  m.obs = [{ k: 'brillo', v: 'metalico', src: 'usuario' }, { k: 'color', v: 'negro', src: 'usuario' }, { k: 'transp', v: 'opaco', src: 'usuario' }, { k: 'habito', v: 'masivo', src: 'usuario' }];
+  m.obsPrev = [];
+  m.notas = 'Registro de ejemplo para probar la app. Registra el imán en Análisis y mira cómo cambian los candidatos.';
+  await guardarMuestra(m);
+  ir('m' + m.id + '-analisis');
+}
+
+/* ---------- Vista de muestra ---------- */
+
+function vistaMuestra(id, tab) {
+  const m = S.muestras.find(x => x.id === id);
+  if (!m) return vacio('Hallazgo no encontrado', 'Puede que se haya eliminado.', h('button', { class: 'btn', on: { click: () => ir('hallazgos') } }, 'Volver'));
+  const tabs = [['fotos', 'Fotos'], ['observar', 'Observar'], ['analisis', 'Análisis'], ['ficha', 'Ficha']];
+  const a = m.obs.length ? analisis(m) : null;
+  const cuerpo = tab === 'fotos' ? tabFotos(m) : tab === 'observar' ? tabObservar(m) : tab === 'analisis' ? tabAnalisis(m, a) : tabFicha(m, a);
+  return h('div', {},
+    h('div', { class: 'mhead' },
+      h('div', {}, h('span', { class: 'cod' }, codigo(m)), ' ', h('b', {}, nombreMuestra(m)), m.ejemplo ? h('span', { class: 'tag ej' }, 'EJEMPLO') : null),
+      a ? pildora(a.nivel.nivel) : null),
+    h('div', { class: 'seg', role: 'tablist' }, tabs.map(([k, t]) => h('button', { type: 'button', role: 'tab', class: k === tab ? 'on' : '', 'aria-selected': String(k === tab), on: { click: () => ir('m' + m.id + '-' + k) } }, t))),
+    cuerpo);
+}
+
+/* ---------- Pestaña: fotos ---------- */
+
+function leerImagen(file) {
+  return new Promise((ok, ko) => {
+    const u = URL.createObjectURL(file), i = new Image();
+    i.onload = () => { URL.revokeObjectURL(u); ok(i); };
+    i.onerror = () => { URL.revokeObjectURL(u); ko(new Error('No se pudo leer la imagen')); };
+    i.src = u;
+  });
+}
+
+async function prepararFoto(file) {
+  const img = await leerImagen(file);
+  const esc = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * esc)), hh = Math.max(1, Math.round(img.naturalHeight * esc));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = hh;
+  c.getContext('2d').drawImage(img, 0, 0, w, hh);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+  const sw = 256, sh = Math.max(3, Math.round(hh * sw / w));
+  const c2 = document.createElement('canvas');
+  c2.width = sw; c2.height = sh;
+  const x2 = c2.getContext('2d');
+  x2.drawImage(c, 0, 0, sw, sh);
+  const px = x2.getImageData(0, 0, sw, sh).data;
+  const gris = new Uint8Array(sw * sh);
+  for (let i = 0; i < gris.length; i++) gris[i] = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+  return { blob, calidad: juzgarFoto(nitidez(gris, sw, sh), exposicion(gris)) };
+}
+
+async function subirFoto(m, slot, file) {
+  try {
+    const { blob, calidad } = await prepararFoto(file);
+    const previas = (S.fotos.get(m.id) || []).filter(f => f.slot === slot);
+    for (const f of previas) { await Almacen.borrar('fotos', f.id); S.urls.delete(f.id); }
+    await Almacen.guardar('fotos', { muestra: m.id, slot, blob, calidad, ts: Date.now() });
+    await cargarFotos(m.id);
+    render();
+    if (calidad.enfoque === 'pobre' || calidad.luz !== 'ok') toast('La foto quedó guardada, pero conviene repetirla: ' + avisoCalidad(calidad));
+  } catch (e) { toast('No se pudo procesar la foto. Prueba con otra.'); }
+}
+
+function avisoCalidad(q) {
+  const p = [];
+  if (q.enfoque === 'pobre') p.push('parece desenfocada (si la superficie es lisa, puede ser normal)');
+  if (q.enfoque === 'regular') p.push('enfoque justo');
+  if (q.luz === 'oscura') p.push('poca luz');
+  if (q.luz === 'quemada') p.push('zonas quemadas por exceso de luz');
+  return p.join(', ') || 'enfoque y luz correctos';
+}
+
+function tabFotos(m) {
+  const fs = S.fotos.get(m.id) || [];
+  const hechas = SLOTS.filter(s => s.base && fs.some(f => f.slot === s.id)).length;
+  const input = (slot, camara) => h('input', { type: 'file', accept: 'image/*', capture: camara ? 'environment' : null, hidden: true, on: { change: e => { const f = e.target.files[0]; if (f) subirFoto(m, slot, f); } } });
+  const celdas = SLOTS.map(s => {
+    const f = fs.find(x => x.slot === s.id);
+    const cam = input(s.id, true), gal = input(s.id, false);
+    const q = f && f.calidad;
+    return h('div', { class: 'slot' + (f ? ' hecha' : '') },
+      h('div', { class: 'slotimg' }, f ? h('img', { src: urlFoto(f), alt: s.t }) : h('span', { class: 'ph' }, '＋')),
+      h('div', { class: 'slottxt' },
+        h('b', {}, s.t, ' ', h('span', { class: 'tag' }, s.base ? 'BÁSICA' : 'OPCIONAL')),
+        h('p', {}, s.d),
+        q ? h('p', { class: 'cal ' + (q.enfoque === 'bueno' && q.luz === 'ok' ? 'ok' : 'aviso') }, avisoCalidad(q)) : null,
+        h('div', { class: 'acciones' }, cam, gal,
+          h('button', { class: 'btn peq', type: 'button', on: { click: () => cam.click() } }, f ? 'Repetir' : 'Cámara'),
+          h('button', { class: 'btn peq', type: 'button', on: { click: () => gal.click() } }, 'Galería'),
+          f ? h('button', { class: 'btn peq', type: 'button', on: { click: async () => { await Almacen.borrar('fotos', f.id); S.urls.delete(f.id); await cargarFotos(m.id); render(); } } }, 'Quitar') : null)));
+  });
+  return h('div', {},
+    h('section', { class: 'card' }, h('h3', {}, 'Captura guiada'),
+      h('p', {}, hechas + ' de 3 vistas básicas. Las fotos quedan en la ficha como registro. El análisis no las interpreta por sí solo: usa lo que marques en Observar, o lo que sugiera la IA si la activas en Ajustes.')),
+    h('div', { class: 'slots' }, celdas),
+    h('button', { class: 'btn pri ancho', on: { click: () => ir('m' + m.id + '-observar') } }, 'Siguiente: observar'));
+}
+
+/* ---------- Pestaña: observar ---------- */
+
+async function sugerirConIA(m) {
+  const key = S.ajustes.iaKey.trim();
+  if (!key) { toast('Falta la clave de la IA en Ajustes.'); return; }
+  const fs = (S.fotos.get(m.id) || []).slice(0, 4);
+  if (!fs.length) { toast('Primero agrega fotos.'); return; }
+  toast('Consultando a la IA…');
+  try {
+    const partes = [{ text: promptIA() }];
+    for (const f of fs) partes.push({ inline_data: { mime_type: 'image/jpeg', data: await blobBase64(f.blob) } });
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(S.ajustes.iaModelo) + ':generateContent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({ contents: [{ parts: partes }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json' } })
+    });
+    if (!r.ok) throw new Error('Respuesta ' + r.status);
+    const j = await r.json();
+    const txt = j.candidates && j.candidates[0] && j.candidates[0].content.parts[0].text;
+    const sugeridas = validarIA(JSON.parse(txt));
+    await cambiar(m, () => {
+      m.obs = m.obs.filter(o => o.src !== 'ia');
+      for (const s of sugeridas) if (!m.obs.some(o => o.k === s.k && o.v === s.v)) m.obs.push(s);
+    });
+    toast(sugeridas.length ? 'La IA sugirió ' + sugeridas.length + ' características. Confírmalas tocándolas.' : 'La IA no encontró características claras.');
+  } catch (e) { toast('No se pudo usar la IA (¿sin internet, clave o modelo inválidos?).'); }
+}
+
+function blobBase64(blob) {
+  return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = () => ko(r.error); r.readAsDataURL(blob); });
+}
+
+function grupoChips(m, k, titulo) {
+  return h('section', { class: 'card' }, h('h3', {}, titulo), h('p', { class: 'ayuda' }, INSTRUCCIONES[k] || ''),
+    h('div', { class: 'chips' }, Object.keys(VOC[k]).map(v => {
+      const o = m.obs.find(x => x.k === k && x.v === v);
+      return chip(VOC[k][v], !!o, () => alternarObs(m, k, v), o && o.src === 'ia');
+    })));
+}
+
+function tabObservar(m) {
+  const hayIA = m.obs.some(o => o.src === 'ia');
+  return h('div', {},
+    S.ajustes.iaKey ? h('section', { class: 'card' }, h('h3', {}, 'Descripción asistida'),
+      h('p', { class: 'ayuda' }, 'La IA solo propone características visibles; tú las confirmas. Sus sugerencias pesan la mitad en el cálculo hasta que las toques. Envía las fotos a Google.'),
+      h('div', { class: 'acciones' },
+        h('button', { class: 'btn', on: { click: () => sugerirConIA(m) } }, 'Sugerir con IA'),
+        hayIA ? h('button', { class: 'btn', on: { click: () => cambiar(m, () => { m.obs = m.obs.filter(o => o.src !== 'ia'); }) } }, 'Descartar sugerencias') : null)) : null,
+    grupoChips(m, 'brillo', 'Brillo'), grupoChips(m, 'color', 'Color'), grupoChips(m, 'transp', 'Transparencia'), grupoChips(m, 'habito', 'Hábito'),
+    h('section', { class: 'card' }, h('h3', {}, 'Rasgos que ves'), h('p', { class: 'ayuda' }, 'Marca solo lo que sea claramente visible. No marcar un rasgo no cuenta en contra.'),
+      h('div', { class: 'chips' }, Object.keys(VOC.rasgo).map(v => { const o = m.obs.find(x => x.k === 'rasgo' && x.v === v); return chip(VOC.rasgo[v], !!o, () => alternarObs(m, 'rasgo', v), o && o.src === 'ia'); }))),
+    h('button', { class: 'btn pri ancho', on: { click: () => ir('m' + m.id + '-analisis') } }, 'Ver análisis'));
+}
+
+/* ---------- Pestaña: análisis ---------- */
+
+function calculadoraDensidad(alUsar) {
+  const campo = (id, rotulo, ph) => h('label', { class: 'campo' }, h('span', {}, rotulo), h('input', { id, type: 'number', inputmode: 'decimal', step: 'any', min: '0', placeholder: ph }));
+  const salida = h('div', { class: 'resultado', 'aria-live': 'polite' });
+  let metodo = 'sum';
+  const bloque = h('div', { class: 'calc' });
+  function pintar() {
+    bloque.replaceChildren(
+      h('div', { class: 'chips fila' },
+        chip('Sumergida (recomendada)', metodo === 'sum', () => { metodo = 'sum'; salida.replaceChildren(); pintar(); }),
+        chip('Desplazamiento en probeta', metodo === 'des', () => { metodo = 'des'; salida.replaceChildren(); pintar(); })),
+      metodo === 'sum'
+        ? h('div', { class: 'campos' }, campo('d-aire', 'Peso en aire (g)', 'p. ej. 52,4'), campo('d-sum', 'Lectura sumergida (g)', 'p. ej. 19,8'), campo('d-res', 'Resolución báscula (g)', '0,01'))
+        : h('div', { class: 'campos' }, campo('d-masa', 'Peso (g)', 'p. ej. 52,4'), campo('d-v1', 'Volumen inicial (mL)', '100'), campo('d-v2', 'Volumen final (mL)', '119'), campo('d-resv', 'Resolución probeta (mL)', '1')),
+      h('button', { class: 'btn', type: 'button', on: { click: resolver } }, 'Calcular'));
+  }
+  function leer(id) { const v = parseFloat(String(document.getElementById(id).value).replace(',', '.')); return Number.isFinite(v) ? v : NaN; }
+  function resolver() {
+    const r = metodo === 'sum' ? densidadSumergida(leer('d-aire'), leer('d-sum'), isNaN(leer('d-res')) ? 0.01 : leer('d-res')) : densidadDesplazamiento(leer('d-masa'), leer('d-v1'), leer('d-v2'), isNaN(leer('d-resv')) ? 1 : leer('d-resv'));
+    if (!r) { salida.replaceChildren(h('p', { class: 'aviso' }, 'Revisa los valores: el peso sumergido debe ser menor que el peso en aire, y el volumen final mayor que el inicial.')); return; }
+    const ancho = (r.hi - r.lo) / r.valor;
+    const etiqueta = 'Densidad ' + num(r.valor, 2) + ' g/cm³ (rango ' + num(r.lo, 2) + '–' + num(r.hi, 2) + ')';
+    salida.replaceChildren(...[h('p', {}, h('b', { class: 'big' }, num(r.valor, 2)), ' g/cm³ ', h('span', { class: 'mut' }, 'rango ' + num(r.lo, 2) + ' a ' + num(r.hi, 2))),
+      ancho > 0.2 ? h('p', { class: 'aviso' }, 'La incertidumbre es alta (±' + Math.round(ancho * 50) + ' %). Una muestra más grande o una báscula más fina mejoran el resultado.') : null,
+      alUsar ? h('button', { class: 'btn pri', type: 'button', on: { click: () => alUsar([Math.max(0, r.lo), r.hi], etiqueta) } }, 'Usar este valor') : null].filter(Boolean));
+  }
+  pintar();
+  return h('div', {}, bloque, salida);
+}
+
+function controlPrueba(m, s) {
+  const k = s.k;
+  const reg = (v, e) => registrar(m, k, v, e);
+  if (k === 'mag') return h('div', { class: 'opciones' }, s.salidas.map(o => botonSalida(o, VOC.mag[o.v], () => reg(o.v))));
+  if (k === 'raya') return h('div', { class: 'opciones' }, s.salidas.map(o => botonSalida(o, VOC.raya[o.v], () => reg(o.v))));
+  if (k === 'fizz') return h('div', { class: 'opciones' }, s.salidas.map(o => botonSalida(o, VOC.fizz[o.v], () => reg(o.v))));
+  if (k === 'mal') return h('div', { class: 'opciones' }, s.salidas.map(o => botonSalida(o, VOC.mal[o.v], () => reg(o.v))));
+  if (k === 'dureza') return h('div', { class: 'opciones col' }, s.salidas.map(o => botonSalida(o, o.etiqueta, () => reg(o.v, 'Dureza entre ' + rangoTxt(o.v) + ' (' + o.etiqueta.toLowerCase() + ')'))));
+  if (k === 'densidad') return calculadoraDensidad((rango, etiqueta) => reg(rango, etiqueta));
+  return h('div', { class: 'chips' }, s.salidas.map(o => chip(VOC[k][o.v], false, () => alternarObs(m, k, o.v))));
+}
+
+function botonSalida(o, texto, fn) {
+  const hay = o.top && o.prob > 0.005;
+  return h('button', { type: 'button', class: 'op', on: { click: fn } }, h('span', { class: 'optxt' }, texto),
+    hay ? h('span', { class: 'opprev' }, '→ ' + corto(o.top.nombre) + ' ' + pct(o.top.p) + ' %') : null);
+}
+
+function tarjetaPrueba(m, s, recomendada) {
+  return h('article', { class: 'prueba' + (recomendada ? ' rec' : '') },
+    h('header', {}, h('h4', {}, s.nombre), recomendada ? h('span', { class: 'tag acc' }, 'RECOMENDADA') : null, s.destructivo ? h('span', { class: 'tag' }, 'DEJA MARCA') : h('span', { class: 'tag' }, 'NO DESTRUCTIVA')),
+    s.porque ? h('p', { class: 'porque' }, 'Por qué: ', s.porque) : null,
+    h('p', { class: 'ayuda' }, INSTRUCCIONES[s.k]),
+    !s.visual && s.k !== 'densidad' ? h('p', { class: 'mut peq' }, 'Debajo de cada respuesta aparece el candidato que quedaría primero.') : null,
+    controlPrueba(m, s));
+}
+
+function cajaEvidencia(titulo, clase, items, vacioTxt) {
+  return h('div', { class: 'evid ' + clase }, h('h4', {}, titulo), items.length ? h('ul', {}, items.map(t => h('li', {}, t))) : h('p', { class: 'mut' }, vacioTxt));
+}
+
+function tabAnalisis(m, a) {
+  if (!a) return vacio('Aún no hay observaciones', 'Marca en Observar lo que ves o registra una prueba para que aparezcan los candidatos.', h('button', { class: 'btn pri', on: { click: () => ir('m' + m.id + '-observar') } }, 'Ir a Observar'));
+  const N = NIVELES[a.nivel.nivel];
+  const prevMap = new Map();
+  const cambio = !!m.obsPrev && m.obsPrev.length > 0 && JSON.stringify(m.obsPrev) !== JSON.stringify(m.obs);
+  if (cambio) calcular(m.obsPrev).forEach(x => prevMap.set(x.id, x.p));
+  const top = a.post.filter(x => x.p >= 0.01).slice(0, 6);
+  const ranking = top.map((x, i) => {
+    const d = cambio ? Math.round((x.p - (prevMap.get(x.id) || 0)) * 100) : 0;
+    const det = x.id === 'otro'
+      ? h('p', {}, 'Lo observado no encaja del todo con ninguna especie de la base. Puede ser algo fuera de ella; las pruebas físicas ayudan a descartarlo.')
+      : h('div', {}, h('p', {}, x.m.f), h('p', { class: 'datos' }, 'Dureza Mohs ', rangoTxt(x.m.h), ' · Densidad ', rangoTxt(x.m.d), ' g/cm³'), x.m.nt ? h('p', {}, x.m.nt) : null, x.m.pel.length ? h('p', { class: 'aviso' }, PELIGROS[x.m.pel[0]]) : null);
+    return h('details', { class: 'cand' + (x.id === 'otro' ? ' otro' : '') },
+      h('summary', {}, h('span', { class: 'cn' }, (i + 1) + '. ' + x.m.n),
+        h('span', { class: 'cp' }, pct(x.p) + ' %', d !== 0 ? h('i', { class: 'delta ' + (d > 0 ? 'sube' : 'baja') }, d > 0 ? '▲ ' + d : '▼ ' + Math.abs(d)) : null),
+        h('span', { class: 'barra' }, h('span', { style: 'width:' + Math.max(1, Math.round(x.p * 100)) + '%' }))),
+      h('div', { class: 'det' }, det));
+  });
+  const fisicas = m.obs.filter(o => KIND_FISICO.includes(o.k));
+  const observado = m.obs.filter(o => o.src !== 'ia').map(etiquetaObs);
+  const inferido = m.obs.filter(o => o.src === 'ia').map(o => etiquetaObs(o) + ' (sugerido por IA, sin confirmar)');
+  const durezaObs = m.obs.find(o => o.k === 'dureza'), densObs = m.obs.find(o => o.k === 'densidad');
+  if (durezaObs) inferido.push('Dureza Mohs entre ' + rangoTxt(durezaObs.v));
+  if (densObs) inferido.push('Densidad entre ' + rangoTxt(densObs.v) + ' g/cm³');
+  if (a.post[0].id !== 'otro') inferido.push('Compatible con ' + a.post[0].m.n + ' según las propiedades registradas en la base');
+  const faltan = ['mag', 'raya', 'dureza', 'densidad', 'fizz', 'mal'].filter(k => !m.obs.some(o => o.k === k)).map(k => KIND_NAMES[k]);
+  faltan.push('Composición química (requiere laboratorio)');
+  if (!m.fluor) faltan.push('Fluorescencia UV (aún no entra en el cálculo)');
+
+  const bloquear = a.nivel.noAlterar && !S.destructivas.has(m.id);
+  const sug = sugerirPruebas(m.obs, S.ajustes.kit, { noAlterar: bloquear });
+  const utiles = sug.filter(s => !s.visual && s.disponible && !s.oculta && s.ganancia > 0.01);
+  const visuales = sug.filter(s => s.visual && s.ganancia > 0.01);
+  const sinEquipo = sug.filter(s => !s.visual && !s.disponible && !s.oculta);
+  const ocultas = sug.filter(s => s.oculta);
+
+  const rec = utiles[0];
+  const secUno = seccion('Próxima prueba recomendada', rec ? tarjetaPrueba(m, rec, true) : h('p', {}, utiles.length === 0 && visuales.length === 0 ? 'Ninguna prueba disponible con tu kit separaría mejor a los candidatos actuales.' : 'Con tu kit no queda una prueba física que aporte. Completa las observaciones visuales.'));
+  const otras = utiles.slice(1);
+  const secOtras = otras.length || visuales.length ? seccion('Otras pruebas y observaciones', otras.map(s => h('details', { class: 'plegable' }, h('summary', {}, s.nombre, s.destructivo ? h('span', { class: 'tag' }, 'DEJA MARCA') : null), tarjetaPrueba(m, s, false))),
+    visuales.slice(0, 3).map(s => h('details', { class: 'plegable' }, h('summary', {}, s.nombre + ' (visual)'), tarjetaPrueba(m, s, false)))) : null;
+  const avisos = [];
+  if (sinEquipo.length) avisos.push(h('p', { class: 'mut peq' }, 'Sin el equipo marcado en Pruebas no se sugiere: ' + sinEquipo.map(s => s.nombre.toLowerCase()).join(', ') + '.'));
+  if (ocultas.length) avisos.push(h('p', { class: 'aviso' }, 'Pruebas que dejan marca ocultas porque la muestra está en NO ALTERAR. ', h('button', { class: 'enlace', type: 'button', on: { click: () => { S.destructivas.add(m.id); render(); } } }, 'Mostrarlas de todos modos')));
+
+  const seg = a.seg.length ? seccion('Seguridad', a.seg.map(x => h('p', { class: 'seg-it' }, x.texto)), h('p', { class: 'mut peq' }, 'Son precauciones razonables, no una alarma: lo más importante es no generar polvo y lavarse las manos.')) : null;
+
+  const geoTxt = { bajo: 'Sin indicios claros', medio: 'Algún indicio: conviene registrar el lugar', alto: 'Podría indicar un proceso o una mineralización: el lugar merece investigarse' }[a.nivel.geo];
+  const mer = a.mer;
+  const valor = seccion('Interés y valor',
+    h('div', { class: 'ejes' },
+      h('div', {}, h('h4', {}, 'Identificación'), h('p', {}, h('span', { class: 'pill ban ' + a.banda.nivel }, 'CONFIANZA ' + a.banda.nivel.toUpperCase()), ' ', a.banda.motivo)),
+      h('div', {}, h('h4', {}, 'Importancia del hallazgo'), h('p', {}, geoTxt + '.')),
+      h('div', {}, h('h4', {}, 'Valor de la muestra'),
+        mer.estimable ? h('div', {}, h('p', {}, 'Mercado probable si se confirma: ' + mer.clases.slice(0, 2).map(c => c.nombre).join('; ') + '.'), h('p', { class: 'mut' }, 'Factores que lo cambian: ' + mer.clases[0].factores.join(', ') + '.'))
+          : h('p', {}, 'No es posible estimar valor todavía.')),
+      h('p', { class: 'mut peq' }, 'La app no estima precios: el valor depende de la calidad, la localidad y el mercado. Para cifras, consulta a un gemólogo, un mineralogista o una casa de remates.')),
+    a.raz.length ? h('div', {}, h('h4', {}, 'Por qué no botarla todavía'), h('ul', { class: 'razones' }, a.raz.map(r => h('li', {}, h('b', {}, r.nombre), ' (' + pct(r.p) + ' %): ' + r.motivos.join('; ') + '.')))) : null);
+
+  const registro = fisicas.length ? seccion('Registro de pruebas', h('ul', { class: 'reg' }, fisicas.map(o => h('li', {}, h('span', {}, etiquetaObs(o)), h('button', { class: 'enlace', type: 'button', on: { click: () => cambiar(m, () => { m.obs = m.obs.filter(x => x.k !== o.k); }) } }, 'Quitar'))))) : null;
+
+  return h('div', {},
+    h('section', { class: 'card nivel ' + N.c }, pildora(a.nivel.nivel), h('p', { class: 'nd' }, N.d),
+      a.nivel.geo !== 'bajo' && a.nivel.nivel !== 'geo' ? h('p', { class: 'mut' }, 'También: indicios de interés geológico.') : null,
+      a.nivel.eco && a.nivel.nivel !== 'eco' ? h('p', { class: 'mut' }, 'También: posible interés económico.') : null,
+      h('p', { class: 'mut peq' }, 'Es una hipótesis a partir de lo que registraste, no una identificación.')),
+    seccion('Posibles identificaciones', h('div', { class: 'ranking' }, ranking),
+      h('p', { class: 'mut peq' }, 'Los puntajes comparan candidatos entre sí; no son probabilidades reales. Toca uno para ver sus propiedades.')),
+    seccion('Qué se sabe', h('div', { class: 'evids' },
+      cajaEvidencia('OBSERVADO', 'obs', observado, 'Nada registrado.'),
+      cajaEvidencia('INFERIDO', 'inf', inferido, 'Nada inferido.'),
+      cajaEvidencia('NO DETERMINADO', 'nd', faltan, ''))),
+    secUno, secOtras, ...avisos, seg, valor, registro);
+}
+
+/* ---------- Pestaña: ficha ---------- */
+
+function campoTexto(m, clave, rotulo, opts) {
+  const o = opts || {};
+  const el = h(o.area ? 'textarea' : 'input', { class: 'ctl', rows: o.area ? 4 : null, type: o.area ? null : (o.tipo || 'text'), inputmode: o.modo || null, placeholder: o.ph || '', value: m[clave] || '' });
+  el.addEventListener('change', async () => { m[clave] = el.value; await guardarMuestra(m); });
+  return h('label', { class: 'campo' }, h('span', {}, rotulo), el);
+}
+
+function tabFicha(m, a) {
+  const fs = S.fotos.get(m.id) || [];
+  const ubic = h('input', { class: 'ctl', type: 'text', placeholder: 'Lugar del hallazgo (opcional)', value: m.ubic.texto });
+  ubic.addEventListener('change', async () => { m.ubic.texto = ubic.value; await guardarMuestra(m); });
+  const idEntrada = h('input', { class: 'ctl', id: 'id-final', list: 'lista-minerales', placeholder: 'Escribe o elige un mineral o roca', value: m.idFinal ? m.idFinal.nombre : '' });
+  const estadoId = h('select', { class: 'ctl', id: 'id-estado' }, h('option', { value: 'confirmada' }, 'Identificación confirmada'), h('option', { value: 'corregida' }, 'Identificación corregida'));
+  estadoId.value = m.idFinal ? m.idFinal.estado : 'confirmada';
+  const guardarId = async () => {
+    const t = idEntrada.value.trim();
+    if (!t) { m.idFinal = null; m.idIA = null; await guardarMuestra(m); render(); return; }
+    const hit = BASE.find(x => x.n.toLowerCase() === t.toLowerCase());
+    m.idFinal = { id: hit ? hit.id : 'texto:' + t.toLowerCase(), nombre: hit ? hit.n : t, estado: estadoId.value, ts: Date.now() };
+    if (a) {
+      const cand = a.post.filter(x => x.id !== 'otro');
+      m.idIA = { top: cand[0].id, top3: cand.slice(0, 3).map(x => x.id), banda: a.banda.nivel, ts: Date.now() };
+    }
+    await guardarMuestra(m);
+    toast('Identificación guardada. Quedó registrada para medir los aciertos.');
+    render();
+  };
+  const rev = m.idFinal && m.idIA ? (m.idIA.top === m.idFinal.id ? 'La app acertó con su primera opción.' : m.idIA.top3.includes(m.idFinal.id) ? 'La app la tenía entre sus tres primeras opciones.' : 'La app no la tenía entre sus tres primeras opciones. Queda registrado como error.') : null;
+  const datalist = h('datalist', { id: 'lista-minerales' }, BASE.map(x => h('option', { value: x.n })));
+  return h('div', {},
+    seccion('Datos',
+      campoTexto(m, 'nombre', 'Nombre o apodo', { ph: nombreMuestra(Object.assign({}, m, { nombre: '' })) }),
+      h('div', { class: 'dos' }, campoTexto(m, 'peso', 'Peso (g)', { modo: 'decimal' }), campoTexto(m, 'tamano', 'Tamaño (mm)', { ph: 'largo × ancho × alto' })),
+      campoTexto(m, 'fluor', 'Fluorescencia UV (opcional)', { ph: 'p. ej. 365 nm: rojo' }),
+      campoTexto(m, 'notas', 'Notas y observaciones', { area: true }),
+      h('div', { class: 'chips fila' },
+        chip(m.fav ? '★ Favorita' : '☆ Marcar favorita', m.fav, async () => { m.fav = !m.fav; await guardarMuestra(m); render(); }),
+        chip('NO ALTERAR (manual)', m.noAlterar, async () => { m.noAlterar = !m.noAlterar; await guardarMuestra(m); render(); })),
+      h('label', { class: 'campo' }, h('span', {}, 'Estado'),
+        (() => { const s = h('select', { class: 'ctl', id: 'estado' }, Object.keys(ESTADOS).map(k => h('option', { value: k }, ESTADOS[k]))); s.value = m.estado; s.addEventListener('change', async () => { m.estado = s.value; await guardarMuestra(m); }); return s; })())),
+    seccion('Ubicación', h('label', { class: 'campo' }, h('span', {}, 'Dónde apareció'), ubic),
+      h('div', { class: 'acciones' }, h('button', { class: 'btn peq', type: 'button', on: { click: () => {
+        if (!navigator.geolocation) { toast('Este navegador no ofrece ubicación.'); return; }
+        navigator.geolocation.getCurrentPosition(async p => { m.ubic.lat = p.coords.latitude; m.ubic.lng = p.coords.longitude; await guardarMuestra(m); render(); }, () => toast('No se pudo obtener la ubicación.'));
+      } } }, 'Usar mi ubicación'), m.ubic.lat != null ? h('span', { class: 'mut' }, num(m.ubic.lat, 4) + ', ' + num(m.ubic.lng, 4)) : null),
+      chip('Mantener privada (no se exporta)', m.ubic.privada, async () => { m.ubic.privada = !m.ubic.privada; await guardarMuestra(m); render(); }),
+      h('p', { class: 'mut peq' }, 'La ubicación no influye en la identificación.')),
+    seccion('Identificación final', h('p', { class: 'ayuda' }, 'Al guardarla se compara con lo que la app proponía; así se mide cuánto acierta.'),
+      h('label', { class: 'campo' }, h('span', {}, 'Qué es'), idEntrada, datalist), h('label', { class: 'campo' }, h('span', {}, 'Tipo de cierre'), estadoId),
+      h('button', { class: 'btn pri', type: 'button', on: { click: guardarId } }, 'Guardar identificación'),
+      rev ? h('p', { class: 'nota' }, rev) : null),
+    fs.length ? seccion('Fotos', h('div', { class: 'miniaturas' }, fs.map(f => h('img', { src: urlFoto(f), alt: SLOTS.find(s => s.id === f.slot).t })))) : null,
+    seccion('Zona de riesgo', confirmarBorrado(m)));
+}
+
+function confirmarBorrado(m) {
+  const caja = h('div', {});
+  const base = () => caja.replaceChildren(h('button', { class: 'btn peligro', type: 'button', on: { click: () => caja.replaceChildren(h('p', {}, 'Se borrarán el hallazgo y sus fotos de este teléfono. No se puede deshacer.'), h('div', { class: 'acciones' }, h('button', { class: 'btn peligro', type: 'button', on: { click: async () => { for (const f of await Almacen.fotosDe(m.id)) await Almacen.borrar('fotos', f.id); await Almacen.borrar('muestras', m.id); S.muestras = S.muestras.filter(x => x !== m); S.fotos.delete(m.id); ir('hallazgos'); } } }, 'Sí, borrar'), h('button', { class: 'btn', type: 'button', on: { click: base } }, 'Cancelar'))) } }, 'Borrar este hallazgo'));
+  base();
+  return caja;
+}
+
+/* ---------- Pestaña global: pruebas ---------- */
+
+const EQUIPO = { iman: 'Imán', porcelana: 'Baldosa sin esmalte', moneda: 'Moneda de cobre', cuchillo: 'Cuchillo o clavo', vidrio: 'Vidrio', vinagre: 'Vinagre', bascula: 'Báscula (0,1 g o mejor)' };
+
+function vistaPruebas() {
+  const guias = [['mag', 'Magnetismo'], ['raya', 'Raya'], ['dureza', 'Dureza'], ['densidad', 'Densidad'], ['fizz', 'Reacción al vinagre'], ['mal', 'Maleabilidad']];
+  const buscar = h('input', { class: 'ctl', id: 'buscar-min', type: 'search', placeholder: 'Buscar mineral o roca' });
+  const res = h('div', { class: 'lista-min' });
+  const pintar = () => {
+    const q = buscar.value.trim().toLowerCase();
+    const l = BASE.filter(x => !q || x.n.toLowerCase().includes(q) || x.f.toLowerCase().includes(q)).slice(0, 40);
+    res.replaceChildren(...l.map(x => h('details', { class: 'cand' }, h('summary', {}, h('span', { class: 'cn' }, x.n), h('span', { class: 'mut' }, x.f)),
+      h('div', { class: 'det' }, h('p', { class: 'datos' }, 'Dureza ', rangoTxt(x.h), ' · Densidad ', rangoTxt(x.d), ' g/cm³'), x.nt ? h('p', {}, x.nt) : null, x.pel.length ? h('p', { class: 'aviso' }, PELIGROS[x.pel[0]]) : null))));
+  };
+  buscar.addEventListener('input', pintar);
+  pintar();
+  return h('div', {},
+    seccion('Mi kit', h('p', { class: 'ayuda' }, 'Solo se sugieren pruebas que puedes hacer con lo que marques.'),
+      h('div', { class: 'chips' }, Object.keys(EQUIPO).map(k => chip(EQUIPO[k], S.ajustes.kit[k], async () => { S.ajustes.kit[k] = !S.ajustes.kit[k]; await guardarAjustes(); render(); })))),
+    seccion('Guías', guias.map(([k, t]) => h('details', { class: 'plegable' }, h('summary', {}, t), h('p', { class: 'ayuda' }, INSTRUCCIONES[k])))
+      .concat([h('details', { class: 'plegable' }, h('summary', {}, 'Luz ultravioleta'), h('p', { class: 'ayuda' }, 'La luz UV de 365 nm daña los ojos: usa gafas con filtro UV y nunca mires la lámpara. Por ahora puedes anotar el color de fluorescencia en la ficha; todavía no entra en el cálculo.'))])),
+    seccion('Calculadora de densidad', calculadoraDensidad(null)),
+    seccion('Base de minerales', h('p', { class: 'ayuda' }, SIN_VERIFICAR), buscar, res));
+}
+
+const SIN_VERIFICAR = 'Valores de referencia compilados por Claude a partir de conocimiento mineralógico general. Falta contrastarlos con RRUFF, USGS o Mindat; trátalos como orientativos.';
+
+/* ---------- Ajustes y respaldo ---------- */
+
+async function exportar() {
+  const incluir = S.ajustes.exportarUbicaciones;
+  const salida = { version: 1, exportado: new Date().toISOString(), muestras: [] };
+  for (const m of S.muestras) {
+    const c = JSON.parse(JSON.stringify(m));
+    if (m.ubic.privada && !incluir) c.ubic = { texto: '', lat: null, lng: null, privada: true };
+    c.fotos = [];
+    for (const f of await Almacen.fotosDe(m.id)) c.fotos.push({ slot: f.slot, calidad: f.calidad, ts: f.ts, datos: await blobBase64(f.blob) });
+    salida.muestras.push(c);
+  }
+  const blob = new Blob([JSON.stringify(salida)], { type: 'application/json' });
+  const a = h('a', { href: URL.createObjectURL(blob), download: 'hallazgos-' + new Date().toISOString().slice(0, 10) + '.json' });
+  document.body.append(a); a.click(); a.remove();
+  S.ajustes.ultimoRespaldo = Date.now();
+  await guardarAjustes();
+  toast('Respaldo generado. Si no se descargó, tu navegador lo bloqueó.');
+  render();
+}
+
+function base64Blob(b64) {
+  const bin = atob(b64), u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return new Blob([u], { type: 'image/jpeg' });
+}
+
+async function importar(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    if (!j || !Array.isArray(j.muestras)) throw new Error('formato');
+    for (const c of j.muestras) {
+      const fotos = c.fotos || [];
+      const m = Object.assign({}, c);
+      delete m.fotos; delete m.id;
+      S.ajustes.contador = Math.max(S.ajustes.contador, m.num || 0);
+      await guardarMuestra(m);
+      S.muestras.push(m);
+      for (const f of fotos) await Almacen.guardar('fotos', { muestra: m.id, slot: f.slot, calidad: f.calidad, ts: f.ts, blob: base64Blob(f.datos) });
+      await cargarFotos(m.id);
+    }
+    S.muestras.sort((a, b) => b.creado - a.creado);
+    await guardarAjustes();
+    toast('Se importaron ' + j.muestras.length + ' hallazgos.');
+    render();
+  } catch (e) { toast('El archivo no es un respaldo válido.'); }
+}
+
+function vistaAjustes() {
+  const r = resumenAciertos(S.muestras);
+  const inFile = h('input', { type: 'file', accept: 'application/json,.json', hidden: true, on: { change: e => { if (e.target.files[0]) importar(e.target.files[0]); } } });
+  const key = h('input', { class: 'ctl', id: 'ia-key', type: 'password', autocomplete: 'off', placeholder: 'Clave de la API (opcional)', value: S.ajustes.iaKey });
+  const mod = h('input', { class: 'ctl', id: 'ia-modelo', type: 'text', value: S.ajustes.iaModelo });
+  const dias = S.ajustes.ultimoRespaldo ? Math.floor((Date.now() - S.ajustes.ultimoRespaldo) / 86400000) : null;
+  return h('div', {},
+    seccion('Apariencia', h('div', { class: 'chips' }, [['auto', 'Automática'], ['light', 'Clara'], ['dark', 'Oscura']].map(([k, t]) => chip(t, S.ajustes.tema === k, async () => { S.ajustes.tema = k; await guardarAjustes(); aplicarTema(); render(); })))),
+    seccion('Mis aciertos', r.total
+      ? h('div', {}, h('p', {}, 'De ' + r.total + ' identificaciones cerradas, la app acertó con su primera opción en ' + r.top1 + ' y la tenía entre las tres primeras en ' + r.top3 + '.'),
+        r.errores.length ? h('ul', { class: 'reg' }, r.errores.map(m => h('li', {}, h('span', {}, codigo(m) + ': la app proponía ' + (porId(m.idIA.top) ? porId(m.idIA.top).n : m.idIA.top) + ' y era ' + m.idFinal.nombre + '.')))) : null)
+      : h('p', { class: 'mut' }, 'Aún no hay identificaciones cerradas. Guarda la identificación final en la Ficha de cada hallazgo para ir midiendo los aciertos y formar tu propio conjunto de datos.')),
+    seccion('Datos en este teléfono',
+      h('p', {}, Almacen.enMemoria ? 'Este navegador no permite guardar datos: lo que registres se perderá al cerrar la página.' : 'Los hallazgos y las fotos se guardan solo en este dispositivo.'),
+      h('p', { class: dias === null || dias > 30 ? 'aviso' : 'mut' }, dias === null ? 'Aún no hay respaldo. Si borras los datos del navegador, se pierde todo.' : 'Último respaldo hace ' + dias + (dias === 1 ? ' día.' : ' días.')),
+      chip('Incluir ubicaciones privadas en el respaldo', S.ajustes.exportarUbicaciones, async () => { S.ajustes.exportarUbicaciones = !S.ajustes.exportarUbicaciones; await guardarAjustes(); render(); }),
+      h('div', { class: 'acciones' }, h('button', { class: 'btn', type: 'button', on: { click: exportar } }, 'Exportar respaldo'), h('button', { class: 'btn', type: 'button', on: { click: () => inFile.click() } }, 'Importar respaldo'), inFile)),
+    seccion('Descripción por IA (opcional)', h('p', { class: 'ayuda' }, 'Sin esto la app funciona completa. Si activas una clave del plan gratuito de Google AI Studio, las fotos se envían a Google para que proponga características visibles. Los límites y condiciones del plan gratuito los define Google y pueden cambiar; revísalos antes de usarlo.'),
+      h('label', { class: 'campo' }, h('span', {}, 'Clave'), key), h('label', { class: 'campo' }, h('span', {}, 'Modelo'), mod),
+      h('button', { class: 'btn', type: 'button', on: { click: async () => { S.ajustes.iaKey = key.value.trim(); S.ajustes.iaModelo = mod.value.trim() || 'gemini-2.5-flash'; await guardarAjustes(); toast('Guardado.'); render(); } } }, 'Guardar')),
+    seccion('Acerca de', h('p', {}, SIN_VERIFICAR), h('p', { class: 'mut' }, 'La app propone hipótesis, no identificaciones. No estima precios. La fluorescencia, las asociaciones minerales y la distribución geográfica aún no forman parte de la base.')),
+    seccion('Borrar todo', borrarTodo()));
+}
+
+function borrarTodo() {
+  const caja = h('div', {});
+  const base = () => caja.replaceChildren(h('button', { class: 'btn peligro', type: 'button', on: { click: () => caja.replaceChildren(h('p', {}, 'Se borrarán todos los hallazgos, fotos y ajustes de este teléfono.'), h('div', { class: 'acciones' }, h('button', { class: 'btn peligro', type: 'button', on: { click: async () => { await Almacen.vaciar(); S.muestras = []; S.fotos.clear(); S.ajustes = JSON.parse(JSON.stringify(AJUSTES_BASE)); aplicarTema(); ir('hallazgos'); } } }, 'Sí, borrar todo'), h('button', { class: 'btn', type: 'button', on: { click: base } }, 'Cancelar'))) } }, 'Borrar todos los datos'));
+  base();
+  return caja;
+}
+
+/* ---------- Estructura general ---------- */
+
+const ICONOS = {
+  hallazgos: 'M4 16l3-8 6-3 6 5-2 8H8z',
+  nueva: 'M11 4a7 7 0 100 14 7 7 0 000-14zM16 16l5 5',
+  pruebas: 'M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3M8 14h8',
+  favoritos: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'
+};
+
+function icono(d) { return h('svg', { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' }, h('path', { d })); }
+
+function titulo(r) {
+  const p = parseRuta(r);
+  if (p) return 'Hallazgo';
+  return { hallazgos: 'Mis hallazgos', nueva: 'Analizar muestra', pruebas: 'Pruebas', favoritos: 'Favoritos', ajustes: 'Ajustes' }[r] || 'Rocas';
+}
+
+function render() {
+  const raiz = document.getElementById('app');
+  const y = window.scrollY;
+  const p = parseRuta(S.ruta);
+  let vista;
+  if (p) vista = vistaMuestra(p.id, p.tab);
+  else vista = { hallazgos: vistaHallazgos, nueva: vistaNueva, pruebas: vistaPruebas, favoritos: vistaFavoritos, ajustes: vistaAjustes }[S.ruta]();
+  const activa = p ? 'hallazgos' : S.ruta;
+  const nav = [['hallazgos', 'Hallazgos'], ['nueva', 'Analizar'], ['pruebas', 'Pruebas'], ['favoritos', 'Favoritos']];
+  raiz.replaceChildren(
+    h('header', { class: 'bar' },
+      p ? h('button', { class: 'ib', type: 'button', 'aria-label': 'Volver', on: { click: () => ir('hallazgos') } }, '‹') : null,
+      h('h1', {}, titulo(S.ruta)),
+      h('button', { class: 'ib', type: 'button', 'aria-label': 'Ajustes', on: { click: () => ir('ajustes') } }, '⚙')),
+    h('main', { class: 'vista' }, vista),
+    h('nav', { class: 'tabs', 'aria-label': 'Secciones' }, nav.map(([k, t]) => h('button', { type: 'button', class: k === activa ? 'on' : '', 'aria-current': k === activa ? 'page' : null, on: { click: () => ir(k) } }, icono(ICONOS[k]), h('span', {}, t)))),
+    h('div', { id: 'toast', class: 'toast', role: 'status', hidden: true }));
+  window.scrollTo(0, y);
+  pintarToast();
+}
+
+async function iniciar() {
+  await Almacen.abrir();
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* opcional */ }
+  const aj = await Almacen.leer('meta', 'ajustes');
+  if (aj) S.ajustes = Object.assign(JSON.parse(JSON.stringify(AJUSTES_BASE)), aj.v, { kit: Object.assign({}, AJUSTES_BASE.kit, aj.v.kit) });
+  S.muestras = (await Almacen.listar('muestras')).sort((a, b) => b.creado - a.creado);
+  for (const m of S.muestras) await cargarFotos(m.id);
+  aplicarTema();
+  S.ruta = leerRuta() || 'hallazgos';
+  window.addEventListener('popstate', () => { S.ruta = leerRuta() || 'hallazgos'; render(); });
+  render();
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { /* sin soporte en este contexto */ });
+}
+
+iniciar().catch(e => { document.getElementById("app").textContent = "No se pudo iniciar: " + e.message; });
+</script>
+</body>
+</html>
