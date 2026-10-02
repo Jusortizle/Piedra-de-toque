@@ -1169,11 +1169,16 @@ async function sugerirConIA(m) {
     for (const f of fs) partes.push({ inline_data: { mime_type: 'image/jpeg', data: await blobBase64(f.blob) } });
     const cuerpo = JSON.stringify({ contents: [{ parts: partes }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json' } });
     let r = await llamarIA(key, S.ajustes.iaModelo, cuerpo);
-    if (r.status === 404) {
-      const alterno = await modeloDisponible(key);
-      if (alterno && alterno !== S.ajustes.iaModelo) {
-        r = await llamarIA(key, alterno, cuerpo);
-        if (r.ok) { S.ajustes.iaModelo = alterno; await guardarAjustes(); }
+    for (let i = 0; i < 2 && (r.status === 503 || r.status === 429); i++) {
+      toast('La IA está saturada, reintentando…');
+      await new Promise(ok => setTimeout(ok, 3000 * (i + 1)));
+      r = await llamarIA(key, S.ajustes.iaModelo, cuerpo);
+    }
+    if (r.status === 404 || r.status === 503 || r.status === 429) {
+      const alterno = await modeloDisponible(key, S.ajustes.iaModelo);
+      if (alterno) {
+        const r2 = await llamarIA(key, alterno, cuerpo);
+        if (r2.ok) { r = r2; S.ajustes.iaModelo = alterno; await guardarAjustes(); }
       }
     }
     if (!r.ok) throw new Error(await detalleError(r));
@@ -1202,12 +1207,12 @@ async function detalleError(r) {
   return 'código ' + r.status + (msg ? ' — ' + msg.slice(0, 160) : '');
 }
 
-/* Primer modelo "flash" de la cuenta que admite generateContent; null si no hay. */
-async function modeloDisponible(key) {
+/* Otro modelo "flash" de la cuenta que admite generateContent (distinto de `excepto`); null si no hay. */
+async function modeloDisponible(key, excepto) {
   const r = await fetch(URL_IA + 'models?pageSize=200', { headers: { 'x-goog-api-key': key } });
   if (!r.ok) return null;
   const j = await r.json();
-  const aptos = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /flash/.test(m.name) && !/(lite|image|tts|live|thinking|exp|preview)/.test(m.name));
+  const aptos = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /flash/.test(m.name) && !/(lite|image|tts|live|thinking|exp|preview)/.test(m.name) && m.name !== 'models/' + excepto);
   return aptos.length ? aptos[aptos.length - 1].name.replace(/^models\//, '') : null;
 }
 

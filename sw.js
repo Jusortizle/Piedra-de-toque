@@ -1,4 +1,4 @@
-const CACHE = 'piedra-de-toque-v2';
+const CACHE = 'piedra-de-toque-v3';
 const NUCLEO = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
